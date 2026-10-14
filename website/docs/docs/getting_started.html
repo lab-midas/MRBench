@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>From the first run to your own reconstruction</h1>
+<p>Start in the repository root with a Python &gt;=3.10 environment. Installing the
+package adds NumPy, PyYAML, SciPy, scikit-image and Matplotlib; pretrained models
+need their separate upstream runtimes and assets.</p>
+<pre><code class="language-bash">python -m pip install -e .
+python examples/make_toy_data.py
+python -m cmrbench.reconstruct --config examples/toy_reconstruction.yaml
+python -m cmrbench.evaluate --reconstruction-dir outputs/toy_reconstruction
+</code></pre>
+<p>The toy is an analytic moving ring with complex phase and four sensitivity maps.
+It demonstrates interface wiring only; its scores are not scientific benchmark
+results. The zero-filled operator combines coils with the conjugate maps.</p>
+<p>Look in <code>outputs/toy_reconstruction/</code> for <code>config.yaml</code>,
+<code>experiment_metadata.json</code>, <code>results.csv</code> and a <code>subjects/</code> directory containing
+the candidate array and reconstruction metadata. Evaluation writes
+<code>evaluation/metrics_v2.csv</code>, frame-level metrics, protocol/provenance JSON and
+QC/animation assets. Source inputs stay unchanged.</p>
+<h2>Use prepared cine</h2>
+<p>Copy <code>examples/cine_ram.yaml</code>. Point <code>dataset.manifest</code> to your CSV and
+<code>dataset.preprocess_root</code> to your prepared arrays, select a subject, and set the
+number of sensitivity-map coils. Run from the repository root: data/output paths
+are working-directory relative. <code>model.config</code> is resolved relative to the
+experiment YAML. Configuration paths are ordinary strings, not environment
+variable interpolation.</p>
+<p>The generic cine path retains every slice and phase. Framewise or temporal-window
+processing belongs inside the adapter. Change physical sampling in the
+<code>sampling</code> section, independently of the model selection. An explicit
+<code>implementation</code> avoids ambiguity between released mask generators.</p>
+<p>Use the selected model's Python interpreter for reconstruction, and the core
+evaluation interpreter for the saved output:</p>
+<pre><code class="language-bash">/path/to/ram-python -m cmrbench.reconstruct --config examples/cine_ram.yaml
+/path/to/evaluation-python -m cmrbench.evaluate --reconstruction-dir outputs/cine_ram_example
+</code></pre>
+<p>Both processes must be able to import this checkout. RAM/SDUM environments that
+meet the core package's Python boundary can install it in editable mode. The
+historically validated CardioMM runtime uses Python 3.8; do not force-install
+the core package metadata there. Use the source checkout on <code>PYTHONPATH</code> with
+the documented compatible upstream dependencies, retaining Python &gt;=3.10 for
+evaluation. That legacy compatibility path was validated on the original server;
+GPU/model inference is not revalidated by this portable snapshot.</p>
+<h2>Optional two-stage orchestration</h2>
+<p>The release copy resolves model interpreters from these environment variables:
+<code>CMRBENCH_RAM_OFFICIAL_PYTHON</code>, <code>CMRBENCH_RAM_DEEPINV_PYTHON</code>,
+<code>CMRBENCH_SDUM_PYTHON</code>, <code>CMRBENCH_CARDIOMM_PYTHON</code> and
+<code>CMRBENCH_EVALUATION_PYTHON</code>. Values must be absolute executable paths. Set
+<code>PYTHONPATH</code> to this checkout for child processes. Then run:</p>
+<pre><code class="language-bash">python -m cmrbench.run_experiment --config examples/cine_ram.yaml
+</code></pre>
+<p>The default is the current interpreter. That fallback is useful only if the
+selected model and evaluation dependencies are actually installed there; it
+does not build or switch environments. An explicitly supplied <code>model.environment</code>
+must agree with the selected runtime. Prefer the separate module commands while
+setting up a new environment. The toy example uses those separate commands.</p>
+<h2>Common first-run problems</h2>
+<p>If files are missing, check the manifest's subject stem and the prepared array
+names. If model loading fails, check external repository and checkpoint paths in
+the model YAML. If sampling conditioning is rejected, inspect the physical
+pattern, calibration geometry and supported model label rather than renaming
+the pattern. For short cine sequences, explicitly choose valid QC phase indices;
+the default <code>[6,22]</code> is zero-based and requires at least 23 phases.</p></main></body></html>

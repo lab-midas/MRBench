@@ -1,0 +1,396 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Sampling subsystem</h1>
+<p>The generic physical-mask contract does <strong>not</strong> require a fully sampled central
+ACS. ACS is detected and serialized; source generators that promise an ACS keep
+their own hard postcondition, while SDUM/CardioMM sensitivity-estimation
+semantics stay model/runtime-specific. See
+<a href="models.html">the public model compatibility guide</a>
+for model-facing calibration requirements and the conditioning boundary.</p>
+<p>CMRBench separates a sampling family (<code>sampling.method</code>) from the concrete
+generator (<code>sampling.implementation</code>). Model selection never chooses or rewrites
+the generator. <code>prepare_reconstruction_input()</code> applies the returned Boolean
+mask once to complete canonical k-space <code>[S,T,Kx,Ky,C]</code>; every protocol returns
+<code>SamplingResult.mask</code> as <code>[S,T,Kx,Ky]</code>.</p>
+<h2>Public selector contract</h2>
+<table>
+<thead>
+<tr>
+<th>method</th>
+<th>implementation</th>
+<th>implementation rule</th>
+<th>native construction</th>
+<th>ACS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uniform</code></td>
+<td><code>canonical</code> by default; <code>sdum</code> or <code>cardiomm</code> only at the documented centering boundary</td>
+<td>omit selector in the equivalence domain; explicitly select source for even Ky + odd <code>ncalib</code></td>
+<td>static <code>[Kx,Ky]</code>, repeated over T, then S</td>
+<td>centered full-Kx Ky strip, configurable <code>ncalib</code> (default 20)</td>
+</tr>
+<tr>
+<td><code>kt_uniform</code></td>
+<td><code>sdum</code> or <code>cardiomm</code></td>
+<td>required</td>
+<td>joint <code>[Ky,T]</code>, expanded over Kx, then S</td>
+<td>centered full-Kx Ky strip</td>
+</tr>
+<tr>
+<td><code>kt_gaussian</code></td>
+<td><code>sdum</code> or <code>cardiomm</code></td>
+<td>required; explicit seed required</td>
+<td>joint <code>[Ky,T]</code>, expanded over Kx, then S</td>
+<td>centered full-Kx Ky strip</td>
+</tr>
+<tr>
+<td><code>kt_radial</code></td>
+<td><code>sdum</code> or <code>cardiomm</code></td>
+<td>required</td>
+<td>rasterized <code>[Kx,Ky,T]</code>, then S</td>
+<td>centered square</td>
+</tr>
+<tr>
+<td><code>random</code></td>
+<td><code>sdum</code> or <code>cardiomm</code></td>
+<td>required</td>
+<td>NVIDIA <code>[Ky]</code> center-fraction random, or CardioMM fixed-ACS <code>[Kx,Ky]</code>; then S/T broadcast</td>
+<td>centered full-Kx Ky strip</td>
+</tr>
+<tr>
+<td><code>equispaced</code></td>
+<td><code>sdum</code></td>
+<td>optional; resolves to <code>sdum</code></td>
+<td>NVIDIA-modified fastMRI <code>[Ky]</code>, then S/T/Kx broadcast</td>
+<td>source-faithful <code>center_fraction</code></td>
+</tr>
+<tr>
+<td><code>radial</code></td>
+<td><code>cardiomm</code></td>
+<td>optional; resolves to <code>cardiomm</code></td>
+<td>CardioMM training-side static <code>[Kx,Ky]</code>, then S/T broadcast</td>
+<td>centered square <code>ncalib</code></td>
+</tr>
+<tr>
+<td><code>vista</code></td>
+<td><code>precomputed</code> (default) or <code>cmrbench</code></td>
+<td>omitted legacy selector resolves to <code>precomputed</code>; otherwise explicit</td>
+<td>disk-backed or native compact <code>[Ky,T]</code>, shared post-generation ACS handling, expanded over Kx and S</td>
+<td>none by default; explicit centered Ky strip with <code>force_acs</code></td>
+</tr>
+<tr>
+<td><code>external_mask</code></td>
+<td>caller value or <code>external</code></td>
+<td>caller-supplied</td>
+<td>explicit declared layout only</td>
+<td>none inserted</td>
+</tr>
+</tbody>
+</table>
+<p>Missing implementation on legacy <code>kt_*</code> YAML temporarily resolves to <code>sdum</code>
+with <code>FutureWarning</code>. Checked-in configs are explicit. The effective <code>config.yaml</code>
+written for a run contains the resolved implementation. Unknown implementation
+values fail closed.</p>
+<p>The effective public inventory has nine methods and sixteen first-class paths:
+<code>uniform/{canonical,sdum,cardiomm}</code>, <code>kt_uniform/{sdum,cardiomm}</code>,
+<code>kt_gaussian/{sdum,cardiomm}</code>, <code>kt_radial/{sdum,cardiomm}</code>,
+<code>random/{sdum,cardiomm}</code>, <code>equispaced/sdum</code>, <code>radial/cardiomm</code>,
+<code>vista/{precomputed,cmrbench}</code>, and <code>external_mask/external</code>. The registry also
+retains VISTA's method-level default factory so omitted legacy selectors keep
+the established <code>precomputed</code> behavior.</p>
+<h2>Constructor and YAML parameter source of truth</h2>
+<p>All retrospective configurations require top-level <code>mode</code>, <code>method</code>, and
+<code>acceleration</code>. The exact implementation-specific contract is:</p>
+<table>
+<thead>
+<tr>
+<th>path</th>
+<th>consumed constructor parameters</th>
+<th>defaults</th>
+<th>seed behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uniform/{canonical,sdum,cardiomm}</code></td>
+<td><code>ncalib</code></td>
+<td>20</td>
+<td>optional provenance only; generator is deterministic</td>
+</tr>
+<tr>
+<td><code>kt_uniform/{sdum,cardiomm}</code></td>
+<td><code>ncalib</code></td>
+<td>20</td>
+<td>optional provenance only; generator is deterministic</td>
+</tr>
+<tr>
+<td><code>kt_gaussian/{sdum,cardiomm}</code></td>
+<td><code>ncalib</code>, <code>alpha</code></td>
+<td>20, 0.2</td>
+<td>required and consumed</td>
+</tr>
+<tr>
+<td><code>kt_radial/{sdum,cardiomm}</code></td>
+<td><code>ncalib</code>, <code>angle4next</code>, <code>cropcorner</code>, <code>radial_acceleration_scale</code></td>
+<td>20, 137.5, true, 0.6</td>
+<td>optional provenance only; generator is deterministic</td>
+</tr>
+<tr>
+<td><code>random/sdum</code></td>
+<td><code>center_fraction</code></td>
+<td>none; required</td>
+<td>required and consumed</td>
+</tr>
+<tr>
+<td><code>random/cardiomm</code></td>
+<td><code>ncalib</code></td>
+<td>20</td>
+<td>required and consumed</td>
+</tr>
+<tr>
+<td><code>equispaced/sdum</code></td>
+<td><code>center_fraction</code></td>
+<td>none; required</td>
+<td>required random offset</td>
+</tr>
+<tr>
+<td><code>radial/cardiomm</code></td>
+<td><code>ncalib</code></td>
+<td>20</td>
+<td>required initial-angle draw; CMRBench explicitly seeds the source behavior</td>
+</tr>
+<tr>
+<td><code>vista/precomputed</code></td>
+<td>optional <code>mask_path</code>, <code>mask_root</code>, <code>force_acs</code>, <code>ncalib</code>, <code>vista_type</code></td>
+<td>default root below; <code>force_acs=false</code>; ncalib absent; <code>VISTA</code></td>
+<td>required file-selection identifier; does not generate</td>
+</tr>
+<tr>
+<td><code>vista/cmrbench</code></td>
+<td>optional <code>force_acs</code>, <code>ncalib</code></td>
+<td><code>force_acs=false</code>; ncalib absent</td>
+<td>required and passed unchanged to the native generator</td>
+</tr>
+<tr>
+<td><code>external_mask/external</code></td>
+<td>exactly one of programmatic <code>mask</code> or <code>.npy</code> <code>mask_path</code>; <code>layout</code>, <code>source</code>, inner provenance <code>parameters</code></td>
+<td><code>layout=S,T,Kx,Ky</code>, <code>source=external</code></td>
+<td>optional provenance only</td>
+</tr>
+</tbody>
+</table>
+<p>The shared NVIDIA/CardioMM k-t wrapper constructors technically accept their
+other-family keyword fields, but only the fields shown above are consumed by
+that family. Production YAML must not put radial-only options on non-radial
+paths. <code>radial/cardiomm</code> is the static fixed-training implementation and does
+not expose its internal 137.5-degree/0.6 constants as constructor parameters;
+<code>kt_radial/cardiomm</code> is dynamic and does expose the four listed radial fields.</p>
+<p>For <code>random/sdum</code> and <code>equispaced/sdum</code>, let
+<code>L=round(Ky*center_fraction)</code>. The centered <code>L</code> lines are inside the total
+nominal sampling budget. Random requires <code>L&lt;=Ky/R</code>; equispaced requires the
+strict normal-domain condition <code>L&lt;Ky/R</code>, plus a finite positive adjusted
+spacing. Thus <code>Ky=156,R8,center_fraction=0.04</code> (approximately six center
+lines) is valid, while ACS20/R8 is not source-faithful for either path.</p>
+<p>VISTA source resolution occurs after subject geometry is known. For
+<code>precomputed</code>, precedence remains <code>sampling.parameters.mask_path</code>, top-level
+<code>sampling.mask_root</code>, then <code>/path/to/cmrbench-assets/masks</code>. The exact file is
+<code>mask_VISTA_&lt;Ky&gt;x&lt;T&gt;_acc&lt;R&gt;_&lt;seed&gt;.txt</code>; a missing file fails without a nearest
+file or native fallback. <code>cmrbench</code> instead calls
+<code>generate_vista_mask(p=Ky, t=T, acceleration=R, seed=sampling.seed)</code> using its
+validated defaults. It rejects <code>mask_root</code> and <code>mask_path</code> rather than silently
+ignoring disk configuration.</p>
+<p>Both sources produce compact Boolean support in <code>[Ky,T]</code> order. The shared
+path transposes it to <code>[T,Ky]</code>, inserts singleton S/Kx axes, and broadcasts it
+to canonical <code>[S,T,Kx,Ky]</code>. The native implementation is the CMRBench Python
+adaptation of the VISTA algorithm (Ahmad et al., MRM 2015), with executable
+reference OSU-CMR/VISTA pinned at
+<code>1ad7ea0130247aca220a3e761fc8a64b770900b2</code>.</p>
+<p>ACS remains post-generation: the native generator has no ACS or <code>ncalib</code>
+concept. By default <code>force_acs=false</code>; with <code>force_acs=true</code>, explicit
+<code>ncalib</code> selects centered compact rows
+<code>[(Ky-ncalib)//2 : (Ky-ncalib)//2+ncalib]</code> across every T through the shared
+sampling-level helper. The union can have different final line counts between
+frames because overlap with the base VISTA mask may differ. Actual R is always
+remeasured from the final canonical union. Precomputed provenance continues to
+record its unchanged base/final hashes, counts, accelerations, and bounds.</p>
+<p>External-mask YAML normally supplies <code>mask_path</code>; direct Python callers may
+instead supply an array. Supported explicit layouts are <code>S,T,Kx,Ky</code>, <code>Ky,T</code>,
+<code>T,Ky</code>, <code>Kx,Ky</code>, and <code>T,Kx,Ky</code>. The input is finite, nonempty, exact binary,
+and never thresholded. CardioMM use of <code>external_mask</code> additionally requires
+result provenance <code>source_identity</code> and <code>nominal_acceleration</code>; these may be
+provided in the constructor's inner <code>parameters</code> mapping. Actual acceleration
+is always remeasured, never trusted from caller metadata.</p>
+<h2>Physical sampling versus model conditioning</h2>
+<p><code>sampling.*</code> defines the physical mask. Model conditioning is a separate
+semantic request and never rewrites that mask.</p>
+<p>SDUM <code>sampling_condition</code> modes are:</p>
+<ul>
+<li><code>auto</code>: optional <code>acceleration</code> and <code>acquisition</code>; family is resolved from
+  an unambiguous physical method.</li>
+<li><code>explicit</code>: required canonical semantic <code>family</code> (<code>uniform</code>, <code>gaussian</code>, or
+  <code>radial</code>), with optional <code>acceleration</code> and <code>acquisition</code>.</li>
+<li><code>upstream_raw</code>: required nonempty <code>raw_mask_type</code> and literal
+  <code>allow_unmatched: true</code>, with optional <code>acceleration</code> and <code>acquisition</code>.
+  This is diagnostic-only and can expose <code>mask_idx=-1</code>, <code>acc_idx=-1</code>, and the
+  released negative-index DC fallback.</li>
+</ul>
+<p>SDUM auto maps <code>uniform -&gt; uniform</code>, <code>kt_uniform/equispaced -&gt; uniform</code>,
+<code>kt_gaussian -&gt; gaussian</code>, and <code>kt_radial/radial -&gt; radial</code>. VISTA and random
+are ambiguous. External masks can auto-map only when their declared
+<code>family</code>/<code>pattern</code> resolves to an SDUM semantic.</p>
+<p>CardioMM accepts <code>mode=auto|explicit</code>; both modes allow optional
+<code>acceleration</code> and <code>num_low_frequencies</code>, while explicit requires
+<code>mask_type=uniform|random|radial</code>. Auto maps <code>uniform -&gt; uniform</code>,
+<code>kt_uniform/equispaced -&gt; uniform</code>, <code>random -&gt; random</code>,
+<code>kt_gaussian -&gt; random</code>, <code>radial -&gt; radial</code>, and <code>kt_radial -&gt; radial</code>.
+VISTA is ambiguous and requires explicit user-forced semantics. In particular,
+the CardioMM semantic string need not equal the physical generator name.
+<code>num_low_frequencies</code> controls model-side sensitivity extraction; it is not
+physical <code>ncalib</code> and cannot synthesize missing ACS samples.</p>
+<p><code>random_cartesian</code> is not in this current selector contract. Its early
+CMRBench-native class and direct unit tests remain only for historical/internal
+coverage; the default registry, generic resolver, package-level public API and
+current examples do not expose it. Historical configs and output metadata are
+left unchanged.</p>
+<h2>Upstream implementations</h2>
+<p>The SDUM implementation is a source-faithful port of
+<code>scripts/mri_data/ktSampling.py</code> plus released wrapper defaults from
+NVIDIA/NV-Raw2Insights-MRI commit
+<code>99be712b2e9fd34bf6a2f709373d311354fbda96</code>. The audited source SHA-256 is
+<code>1c6a71ffe862a88182c36b2eddc955e854b047cfe6a98e1b0b0e2ef36f278db0</code>;
+license is Apache-2.0 with the MONAI Consortium notice retained.</p>
+<p>The CardioMM implementation is a source-faithful local port of
+<code>CardioMM_dataundersampling/Python_Reimpl_Version/cardiomm_mask_generator</code>
+from CardioMM commit <code>abb6f8a4e293426736467c9859a5f5755c38c8aa</code>.
+Its dispatcher SHA-256 is
+<code>67d8af67d927b4c939057cdfb5b2c5c9699eb50ac6ca9aa889817f6dfec59960</code>.
+CMRBench preserves CardioMM's <code>RandomState</code>/inverse-CDF Gaussian path,
+duplicate repair and scikit-image radial rasterizer. It requires the otherwise
+optional Gaussian seed, uses an exact NumPy Toeplitz expression instead of a
+SciPy constructor, and performs only the canonical transpose/slice broadcast.
+The audited upstream README states academic use; no standard license file was
+found at the pinned commit, so provenance does not claim a conventional SPDX
+license.</p>
+<h2>Canonical Uniform proof contract</h2>
+<p>Both sources compute a centered <code>[Kx,ncalib]</code> strip padded to <code>[Kx,Ky]</code> and set
+<code>mask[:,0::R]=1</code>. Their start expressions are <code>(Ky-ncalib)//2</code> (SDUM) and
+<code>floor(Ky/2)-floor(ncalib/2)</code> (CardioMM). They are identical except when Ky is
+even and <code>ncalib</code> is odd; at that boundary CardioMM starts one Ky column to the
+right. The 48-case matrix covers <code>ncalib=8,12,15,16,20,24</code>, R4/R8/R16/R24,
+and geometries 192x156x25 and 31x29x7. Every case records array equality,
+both binary SHA-256 values, both nonzero counts, both support-derived actual R
+values, and centered-strip ACS geometry. Forty-four cases are exactly equal;
+the four even-Ky/odd-<code>ncalib</code> cases are intentionally different.</p>
+<p>Therefore <code>uniform</code> remains canonical by default for positive <code>ncalib&lt;=Ky</code>,
+integer R, and all parity combinations except even Ky + odd <code>ncalib</code>. The
+canonical protocol rejects only that ambiguous boundary and tells the caller
+to select <code>implementation: sdum</code> or <code>implementation: cardiomm</code>; both
+source-faithful implementations are registered for that purpose. It does not
+force either formula into the other.</p>
+<h2><code>ncalib</code> semantics</h2>
+<p>All four generated families default to <code>ncalib=20</code> for backward compatibility,
+but the generic generator layer does not impose ACS20. A positive user value is
+accepted when it fits the geometry: non-radial families require
+<code>ncalib&lt;=Ky</code>; radial requires <code>ncalib&lt;=Kx</code> and <code>ncalib&lt;=Ky</code>. Uniform,
+ktUniform and ktGaussian union a full-Kx centered Ky strip of width <code>ncalib</code>;
+ktRadial unions a centered <code>ncalib x ncalib</code> square. Requested R remains the
+nominal user/model category; changing ACS width changes only the measured
+actual R.</p>
+<p>The public CardioMM launcher and the public SDUM recipes use 20 as their
+reference value, but this alone does not prove that their released checkpoints
+were trained only with ACS20. CardioMM retains its legacy compatibility label
+pending a checkpoint-history audit. For SDUM, a valid source-native non-20 ACS
+is runtime-supported and its checkpoint training exposure is recorded as
+unknown, rather than inferred to be OOD. CardioMM now passes the configured
+truthful <code>num_low_frequencies</code> to its released sensitivity extractor; current
+formal configs remain fixed at 20. The source can auto-detect a contiguous 1-D
+center for null/0, while 2-D radial needs an explicit square size. It consumes
+the actual masked tensor and does not synthesize absent central samples. SDUM's released
+categorical interface carries family, nominal R and acquisition, not ACS
+width; its ACS/CSM path derives the usable central region from the supplied
+mask. Invalid <code>ncalib</code> provenance or a mask that lacks its <strong>declared</strong>
+strip/square fails before inference. If no physical ACS is declared, missing
+center support is recorded and deferred to the model runtime rather than made
+a generic sampling failure.</p>
+<h2>Real implementation differences</h2>
+<p>The non-uniform implementations are not aliases. At 192x156x25, ACS20:</p>
+<table>
+<thead>
+<tr>
+<th>family/R</th>
+<th>SDUM sampled points / actual R / SHA-256</th>
+<th>CardioMM sampled points / actual R / SHA-256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kt_uniform</code> R4</td>
+<td>259200 / 2.888888888888889 / <code>7c923847…1f58</code></td>
+<td>256128 / 2.923538230884558 / <code>970996ef…25af</code></td>
+</tr>
+<tr>
+<td><code>kt_uniform</code> R8</td>
+<td>177792 / 4.211663066955 / <code>388184fc…7850</code></td>
+<td>176256 / 4.248366013071895 / <code>ed7ef3c0…1d0e</code></td>
+</tr>
+<tr>
+<td><code>kt_gaussian</code> R4 seed1</td>
+<td>244032 / 3.068450039339 / <code>9b1e4ff4…793</code></td>
+<td>240768 / 3.110047846889952 / <code>d6874747…ab7</code></td>
+</tr>
+<tr>
+<td><code>kt_gaussian</code> R8 seed1</td>
+<td>170688 / 4.386951631046 / <code>9c967ac9…eff</code></td>
+<td>170304 / 4.396843291995491 / <code>fec063ad…8b3d</code></td>
+</tr>
+</tbody>
+</table>
+<p>The radial ports deliberately retain different upstream rasterizers and their
+tie behavior: SDUM uses SciPy <code>ndimage.rotate</code>; CardioMM uses
+<code>skimage.transform.rotate(order=0, mode=constant, preserve_range=True)</code>.</p>
+<h2>Historical Random Cartesian note (not a current selector)</h2>
+<p><code>RandomCartesianSampling</code> first appears, already in its present fixed-count
+<code>default_rng.choice</code> form, in CMRBench commit
+<code>18600427341155dc58c15451aa9ec5a56077d3d4</code>. File history, comments and the
+separate fastMRI diagnostic scripts provide no evidence of a fastMRI port.
+It is therefore recorded as an independent <code>cmrbench_native</code> implementation,
+not fastMRI-derived.</p>
+<p>The code does not materialize a separate native mask array: its stochastic
+primitive is a 1-D selected-index set of length <code>round(phase_size/R)</code>. With the
+default <code>phase_encoding_axis=3</code>, only Ky indices are selected and every Kx point
+on each selected line is acquired. A time-varying run draws one independent
+line-index set per T; <code>time_varying=false</code> reuses one set. The result is shared
+over S and written directly into <code>[S,T,Kx,Ky]</code>. Axis 2 selects Kx instead. There
+is no ACS. This differs from genuinely joint k-t masks (<code>[Ky,T]</code>) and radial
+masks (<code>[Kx,Ky,T]</code>), and from fastMRI <code>RandomMaskFunc</code> center-fraction plus
+outer-line Bernoulli semantics. This historical implementation is not
+selectable through current generic CMRBench sampling.</p>
+<h2>Acceleration and provenance</h2>
+<p><code>sampling.acceleration</code> is always the requested/nominal R used by discrete model
+conditioning. <code>actual_acceleration</code> is recomputed from the final canonical
+binary mask as <code>mask.size / count_nonzero(mask)</code> and is never used to derive a
+category. Every generated result records method, implementation, upstream
+repository/commit/source, seed, ACS and generator parameters, native/canonical
+layouts, sampled/total points, binary SHA-256, requested R and actual R.
+Both R values and the implementation are persisted in subject JSON,
+<code>results.csv</code>, <code>experiment_metadata.json</code>, effective <code>config.yaml</code>, and the
+concise console PASS line.</p>
+<h2>Remote engineering validation</h2>
+<p>The following user-reported remote results are compatibility/architecture
+smoke tests only, not reconstruction-quality evidence:</p>
+<ul>
+<li>CardioMM checkpoint/runtime + CardioMM-native ktGaussian R8: PASS.</li>
+<li>SDUM Small + SDUM ktGaussian R24: PASS.</li>
+<li>SDUM Small + ktUniform R8: the historical strict pre-inference failure is no
+  longer policy; auto conditioning uses the unambiguous <code>uniform</code> semantic and
+  preserves <code>kt_uniform</code> as the physical family.</li>
+<li>Earlier passes retained as evidence: CardioMM generated Uniform8, CardioMM
+  frozen external Uniform8, SDUM Small ktRadial16, and sampling compatibility
+  contract tests.</li>
+</ul>
+<p>VISTA supports both the historical precomputed source and the frozen native
+CMRBench generator; model identity does not alter either physical mask path.</p>
+<p>The public model guide explains conditioning and compatibility:
+<a href="models.html">model setup and OOD conditions</a>.</p></main></body></html>

@@ -1,0 +1,4 @@
+name: zero_filled
+scientific_model: false
+requires_sensitivity_maps: true
+coil_combination: sum(coil_images * conj(sensitivity_maps))

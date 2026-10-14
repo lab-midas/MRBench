@@ -1,0 +1,48 @@
+# Requires external fastMRI data, acquired-ACS ESPIRiT and the RAM runtime.
+experiment:
+  name: fastmri_ram_example
+  seed: 1
+dataset:
+  name: fastmri_multicoil
+  manifest: example_volume.h5
+  split: validation
+  preprocess_root: /path/to/fastmri/brain/multicoil_val
+  domain: brain
+  selection:
+    slices: all
+  parameters:
+    scaling: none
+    input_prewhitened: false
+    sensitivity_maps:
+      source: espirit
+      implementation: sigpy
+      calibration: sampling_acs
+      calib_width: 24
+      kernel_width: 6
+      calibration_matrix_threshold: 0.02
+      eigenvalue_crop_threshold: 0.95
+      max_iterations: 100
+sampling:
+  mode: retrospective
+  method: uniform
+  implementation: canonical
+  acceleration: 4
+  seed: 1
+  parameters:
+    ncalib: 24
+model:
+  config: ../configs/models/ram_deepinv.yaml
+output:
+  root: outputs/fastmri_ram_example
+  save_reconstruction: true
+  save_metadata: true
+  save_qc: false
+evaluation:
+  enabled: true
+  metric_protocol: cmrbench_recon_metrics_v2_subject_p995
+  qc:
+    enabled: true
+    policy: mid_slice_fixed_phases_v1
+    phase_indices: [0]
+  gif:
+    enabled: false

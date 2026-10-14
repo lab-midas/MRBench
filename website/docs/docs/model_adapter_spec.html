@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Model adapter specification</h1>
+<h2>Sampling-condition separation</h2>
+<p>Adapters must not infer documented training exposure from runtime acceptance.
+Physical <code>SamplingResult</code> provenance, model-side categorical/text/ACS inputs,
+documented-reference matches, and observed runtime resolution are orthogonal.
+SDUM and CardioMM may warn and run a valid OOD measurement; ambiguous automatic
+semantic mappings require explicit model parameters. RAM remains categorical-
+condition-free and consumes externally supplied sensitivity maps. Upstream
+inference exceptions preserve their original type/message and are reported as
+<code>model_inference</code>, not as physical sampling validation.</p>
+<p>Every future adapter implements <code>ReconstructionModel</code>, receives a canonical
+<code>ReconstructionInput</code>, and returns a <code>ReconstructionResult</code> in
+<code>[S,T,X,Y]</code> geometry.</p>
+<pre><code class="language-python">class ExampleAdapter(ReconstructionModel):
+    def load(self):
+        ...
+
+    def reconstruct(self, input):
+        # canonical input
+        # ↓
+        # model-specific preprocessing
+        # ↓
+        # model inference
+        # ↓
+        # inverse preprocessing
+        # ↓
+        # canonical reconstruction
+        ...
+
+    def model_info(self):
+        ...
+</code></pre>
+<p>An adapter may permute axes, convert tensor libraries, normalize, pad, crop,
+coil-compress, estimate or convert sensitivity maps, build batches, move data to
+a device, translate masks, or preserve a model's original FFT behavior. These
+operations are local to the adapter and may not redesign the dataset or sampling
+interfaces.</p>
+<p>Significant transformations are returned as ordered <code>TransformRecord</code> entries,
+for example axis permutation, 34-to-16 coil compression, padding to a model
+matrix, or model-specific normalization. The adapter must not mutate the
+canonical input in place.</p>
+<p><code>model_info()</code> supports model name/version, checkpoint and identifier, source
+commit, parameter count, device, precision, and flexible additional metadata.
+Fields may be unavailable in v0.1; future experiment records can populate them
+without changing the base method.</p>
+<p><code>ZeroFilledAdapter</code> is the current sanity baseline. It applies <code>ifft2c</code> to
+<code>[S,T,Kx,Ky,C]</code>, multiplies coil images by conjugated <code>[S,1,X,Y,C]</code> sensitivity
+maps, and sums coils without a <code>sum(|smap|^2)</code> denominator. It returns
+<code>[S,T,X,Y]</code> without normalization.</p>
+<p>The manual full-data check is an <strong>adjoint consistency check</strong>, not an assertion
+that the reference must be reproduced. With the established coil sum, its
+prediction is <code>reference * sum(|sensitivity_maps|^2)</code>. The smoke test reports
+both actual-versus-prediction consistency and actual-versus-reference discrepancy
+without modifying or normalizing the maps.</p>
+<p>The included SDUM adapter translates canonical input into its released private
+layout, runs inference and restores <code>[S,T,X,Y]</code> while recording transforms and
+provenance. RAM and CardioMM use the same public boundary with their own
+released behavior. See <a href="models.html">model setup</a> for their input requirements.</p></main></body></html>

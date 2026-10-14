@@ -1,0 +1,19 @@
+name: cardiomm
+adapter_version: "0.3.0"
+
+parameters:
+  source_root: /path/to/cmrbench-assets/external/CardioMM_MMCMR-427K
+  checkpoint: /path/to/cmrbench-assets/checkpoints/CardioMM/epochbest.ckpt
+  clip_dir: /path/to/cmrbench-assets/external/CardioMM_MMCMR-427K/clip-vit-base-patch16
+  device: cuda:0
+  num_low_frequencies: 20
+  inference_batch_size: 1
+  text_conditioning_cache: true
+  inference_context: no_grad
+  metadata:
+    lifespan: Adult
+    field_strength: 1.5T
+    vendor: Siemens
+    scanner: Aera
+    modality: cine
+    view: short-axis

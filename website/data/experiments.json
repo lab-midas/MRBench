@@ -1,0 +1,85 @@
+[
+  {
+    "id": "main-v1",
+    "label": "Acceleration & k-t sampling",
+    "category": "Acquisition & measurement robustness",
+    "status": "quantitative",
+    "metrics_path": "data/main_metrics.json",
+    "csv_path": "data/main_metrics.csv",
+    "description": "Compare three pretrained models under increasing retrospective undersampling and three physical sampling patterns.",
+    "settings": "65 subjects; SDUM Base, RAM DeepInv, CardioMM; CardioMM-source k-t uniform/Gaussian/pseudo-radial; nominal R8/16/24; ncalib20; seed1; Metrics v2.",
+    "limitations": "1,755 audited subject endpoints across 27 complete groups. Actual R differs from nominal R. This table covers the in-house constructed-k-space protocol only."
+  },
+  {
+    "id": "vista-archive",
+    "label": "VISTA sampling shift",
+    "category": "Acquisition & measurement robustness",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  },
+  {
+    "id": "acs-archive",
+    "label": "Calibration / ACS dependence",
+    "category": "Acquisition & measurement robustness",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  },
+  {
+    "id": "noise-pilot",
+    "label": "Complex measurement noise",
+    "category": "Acquisition & measurement robustness",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  },
+  {
+    "id": "mistrigger-pilot",
+    "label": "Cardiac mistriggering",
+    "category": "Acquisition & measurement robustness",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  },
+  {
+    "id": "respiratory-pilot",
+    "label": "Respiratory motion",
+    "category": "Acquisition & measurement robustness",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  },
+  {
+    "id": "scaling-pilot",
+    "label": "Global input scaling",
+    "category": "Signal representation & encoding robustness",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  },
+  {
+    "id": "magnitude-pilot",
+    "label": "Magnitude-derived synthetic k-space",
+    "category": "Signal representation & encoding robustness",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  },
+  {
+    "id": "dataset-shift",
+    "label": "Cross-dataset generalization",
+    "category": "Domain generalization",
+    "status": "pending",
+    "description": "Results will be added in a future release.",
+    "settings": "See the experiment guide for implemented recipes and the current research plan.",
+    "limitations": "No quantitative table or qualitative result asset is included in this release."
+  }
+]

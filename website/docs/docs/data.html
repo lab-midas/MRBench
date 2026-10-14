@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Preparing data for CMRBench</h1>
+<p>The canonical interface describes complete subjects, while permitting different
+spatial sizes and coil counts between subjects. Complex k-space is stored as
+<code>[slice,time,kx,ky,coil]</code>. A physical mask has the same first four dimensions and
+contains no coil dimension. A reference is optional for reconstruction and
+required for reference-based evaluation.</p>
+<h2>The prepared cine reader</h2>
+<p>For a manifest subject <code>ExampleCase</code>, prepare:</p>
+<pre><code class="language-text">preprocess/
+  norm_img_ExampleCase.txt.npy       # complex [S,T,X,Y,1]
+  cc_smap_15_ExampleCase.txt.npy     # complex [S,1,X,Y,15]
+</code></pre>
+<p>Use a CSV with at least <code>filename</code> and <code>split</code>:</p>
+<pre><code class="language-csv">filename,split,cohort_type
+ExampleCase,evaluation,example
+</code></pre>
+<p>The filename's stem identifies the subject; split names are explicit selections,
+not automatically generated partitions. Additional columns are retained as
+metadata. Set <code>sensitivity_map_coils</code> to match the filename and array. The reader
+forms <code>coil_images = reference * sensitivity_maps</code>, then applies the common
+centered orthonormal FFT. This establishes a retrospective benchmark source;
+it does not recover raw scanner measurements or prescribe preprocessing for a
+new cohort. Do not silently replace the reference with RSS.</p>
+<p>Model-specific normalization, padding, coil conversion and inverse transforms
+belong inside adapters. Evaluation normalization belongs in the evaluator and
+does not change saved scientific arrays.</p>
+<h2>Raw fastMRI</h2>
+<p>Install the optional preparation dependencies with <code>pip install -e '.[fastmri]'</code>
+in the core preparation/evaluation environment. The reader loads raw HDF5
+<code>kspace</code> and <code>reconstruction_rss</code>, performs a centered complex image-domain crop
+to reference geometry, and maps static images into the canonical time dimension
+<code>T=1</code>. It does not use RSS as a complex model input or impose cine temporal
+semantics on static data.</p>
+<p>Use <a href="../examples/fastmri_ram.yaml"><code>../examples/fastmri_ram.yaml</code></a> as a template.
+<code>dataset.manifest</code> is the selected HDF5 basename for this reader, while
+<code>dataset.selection.slices</code> is <code>all</code> or an integer. This differs from cine's CSV
+manifest. Choose valid static QC phase index <code>[0]</code> and leave cine GIF output off.</p>
+<p>Sensitivity maps for RAM can be provided or estimated with the SigPy ESPIRiT
+backend <strong>after</strong> applying the actual acquisition mask. Calibration uses only
+acquired ACS; unacquired source samples cannot enter map estimation. See
+<a href="fastmri_multicoil_input.html">the detailed fastMRI input guide</a>. A new experiment
+must state its reference definition; cine's constructed complex reference and
+fastMRI's RSS reference should not be pooled into one leaderboard.</p>
+<h2>Already acquired undersampled data</h2>
+<p>The interfaces support <code>sampling.mode: acquired</code>: the reader returns the actual
+undersampled measurements and their acquisition mask, which preparation
+preserves. The shipped cine reader constructs complete starting data, and the
+fastMRI path targets full train/validation sources. There is no universal raw
+scanner/DICOM loader in this release. Add a reader for your acquired format
+rather than discarding its mask or applying a second retrospective mask.</p></main></body></html>

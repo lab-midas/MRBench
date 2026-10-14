@@ -1,0 +1,152 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Robustness experiments</h1>
+<p>The main study asks how released models respond to acquisition changes. Its
+physical mask is shared between models, while each model retains its own internal
+normalization, sensitivity estimation and conditioning. The same distinction
+applies to the simulation pilots below. Code availability and result availability
+are tracked separately in the dashboard.</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Included code</th>
+<th>Results included in the dashboard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Acceleration and k-t sampling</td>
+<td>Patient-sweep runners and samplers</td>
+<td>Full main table: 65 subjects × 3 models × 3 families × R8/16/24</td>
+</tr>
+<tr>
+<td>VISTA and ACS dependence</td>
+<td>VISTA sampler, ACS/preflight support and QC plotting</td>
+<td>Empty placeholder; no result asset or cohort metrics included</td>
+</tr>
+<tr>
+<td>Complex measurement noise</td>
+<td>Noise controller, noise sweeps, fully sampled QC</td>
+<td>Empty placeholder; no noise table or figure included</td>
+</tr>
+<tr>
+<td>Cardiac mistriggering</td>
+<td>Motion simulator/controller and QC plotting</td>
+<td>Implemented; no local final metrics or prepared motion assets</td>
+</tr>
+<tr>
+<td>Respiratory motion</td>
+<td>Motion simulator/controller and QC plotting</td>
+<td>Implemented translation surrogate; no local final cohort results</td>
+</tr>
+<tr>
+<td>Global input scaling</td>
+<td>Scaling controller and QC plotting</td>
+<td>Implemented; separate single-slice fastMRI diagnostics exist privately and are not the cardiac cohort</td>
+</tr>
+<tr>
+<td>Magnitude-derived k-space</td>
+<td>Construction controller and QC plotting</td>
+<td>Implemented; no locally available final cohort results</td>
+</tr>
+<tr>
+<td>Dataset shift</td>
+<td>Static fastMRI reader and preparation</td>
+<td>Input capability; further cross-dataset benchmark results planned</td>
+</tr>
+</tbody>
+</table>
+<h2>Main retrospective study</h2>
+<p>The released table uses SDUM Base, RAM DeepInv and CardioMM with physical
+<code>implementation: cardiomm</code>, k-t uniform/Gaussian/pseudo-radial masks,
+nominal R=8/16/24, ncalib=20 and seed=1. Pseudo-radial generation retains
+<code>angle4next=137.5</code>, <code>cropcorner=true</code>, <code>radial_acceleration_scale=0.6</code>.
+These are Cartesian rasterized masks; the framework does not imply a NUFFT
+radial acquisition. Actual R is computed from the realized complete mask.</p>
+<p>Each source result is a full-subject Metrics v2 endpoint. Frame means are
+computed within each subject, then subjects receive equal weight in cohort
+summaries. The published final groups contain 65 subjects. Historical patient
+task manifests were frozen for 66 subjects and 1,782 tasks, and 27 records from
+one now-ineligible subject are excluded by final aggregation. The public table
+and cohort audit retain the final scope. Do not regenerate or reinterpret that
+historical study from the toy manifest.</p>
+<h2>Running the included pilots</h2>
+<p>The copied controllers keep their original editable CONFIG block. Configure
+the subject, manifest, preprocess root, cache directory, model YAML asset paths
+and runtime environment variables before running them from the repo root:</p>
+<pre><code class="language-bash">python scripts/noise/run_kspace_noise.py
+python scripts/motion/run_motion_reconstruction.py
+python scripts/scaling/run_global_scaling.py
+python scripts/magnitude_image/run_magnitude_derived_kspace.py
+</code></pre>
+<p>The subject is selected from the configured evaluation split. Only the toy
+quick start runs without external data and model assets. Controllers launch
+model workers in separate interpreters; visualization scripts read completed
+caches and do not run inference. The original study cohort/manifests and raw
+cache arrays are not included in this upload candidate.</p>
+<p>The recipe defaults below describe the copied settings at snapshot time, not
+verified settings for every historical animation. Record the resulting metadata
+and hashes for any actual run.</p>
+<h2>Complex Gaussian measurement noise</h2>
+<p><code>scripts/noise/run_kspace_noise.py</code> uses k-t uniform, nominal R8, ncalib20,
+sampling seed1 and noise seed1, with target SNRs 25/30/35 dB. Noise is circular
+complex Gaussian with real/imaginary standard deviation <code>sigma_complex/sqrt(2)</code>.
+It is added only to acquired multi-coil entries, including acquired ACS. Sigma is
+derived from the clean acquired-support signal energy; samples are not rescaled
+to force the realized SNR to equal its target.</p>
+<p>SNR is <code>20*log10(||clean acquired data||2 / ||added acquired noise||2)</code>.
+Record both target and realized SNR, complex sigma and noise seed. Each frozen
+noisy measurement is shared by all models. External maps/mask remain fixed;
+SDUM/CardioMM internal map estimation sees noisy ACS. RAM retains its existing
+sigma-zero integration, so this is an external perturbation test, not a new
+noise-aware RAM condition.</p>
+<p>The existing private R=1 diagnostic uses the clean fully sampled <strong>coil-combined baseline</strong>
+as its comparator. It is a measurement-noise sanity example and cannot rank the
+three foundation models. That private display normalizes each source by subject p99.5
+and uses scale-invariant anatomy error maps; it supplies no cohort metrics and is excluded from this release.</p>
+<h2>Cardiac mistriggering</h2>
+<p><code>simulate_mistriggering</code> randomly replaces a configured fraction of acquired
+phase-encoding lines with lines from another cardiac phase, using a fixed seed
+and the same corruption across coils. Rounding determines the realized line
+count. <code>preserve_acs</code> optionally protects explicitly declared acquired ACS;
+record that setting, eligible/replaced line counts and seed.</p>
+<p>The controller's current <code>MISTRIGGER_FRACTION=0.00</code> is a no-corruption setting.
+Choose and record nonzero levels for a stress experiment. This is a phase-line
+inconsistency surrogate, not a full ECG acquisition model.</p>
+<h2>Respiratory translation surrogate</h2>
+<p><code>simulate_respiratory_motion</code> applies a line-dependent k-space phase ramp for
+sinusoidal in-plane translation along canonical X. Defaults in the copied
+controller are amplitude 10 pixels, four cycles across Ky, zero respiratory
+phase, <code>MOTION_TYPE=respiratory</code> and <code>PRESERVE_ACS=False</code>. It restores ACS only
+when explicitly requested and finally applies the physical mask.</p>
+<p>The displacement is indexed by the Ky line order; the code does not model true
+scanner timing, nonrigid deformation, through-plane motion or subject breathing
+traces. Report it as a controlled surrogate and preserve its exact settings.</p>
+<h2>Global input scaling</h2>
+<p><code>scripts/scaling/run_global_scaling.py</code> freezes a k-t uniform nominal-R8,
+ncalib20, seed1 anchor and applies positive factors 0.01/0.1/1/10/100 to the
+input measurement. The physical mask, reference and external sensitivity maps
+are unchanged. Zero-filled output scales linearly; candidate outputs are kept
+in their raw adapter units without dividing by the factor. Each model's internal
+normalization/estimation is preserved.</p>
+<p>Scale-invariant Metrics v2 and anatomy displays can hide global output-gain
+changes. Include raw-amplitude diagnostics and scale ratios alongside structural
+quality before interpreting scaling robustness. Separate fastMRI VCC/coil
+comparison diagnostics are not interchangeable with this cardiac experiment.</p>
+<h2>Magnitude-derived synthetic k-space</h2>
+<p><code>scripts/magnitude_image/run_magnitude_derived_kspace.py</code> forms
+<code>fft2c(complex_sensitivity_maps * abs(complex_reference))</code>, then samples it using
+the selected physical mask. Defaults are k-t uniform, nominal R8/16/24,
+ncalib20 and seed1. This removes the reference object's phase while retaining
+complex sensitivity-map phase. It is not a claim that every complex phase in the
+coil data is removed. The magnitude reference remains the comparison target;
+generated caches are explicitly labeled as synthetic.</p>
+<h2>Sampling/ACS and future dataset shifts</h2>
+<p>VISTA and ACS study assets need explicit physical-mask provenance, effective R,
+ACS geometry/size and model conditioning for each condition. Archived GIFs alone
+cannot establish paired measurements. Add quantitative tables only after a
+versioned audit verifies subject coverage and masks.</p>
+<p>For future CMRxRecon/fastMRI cohorts, state dataset selection, train/evaluation
+overlap, reference construction, preprocessing, static/cine geometry and protocol
+separately. Keep their tables independent from the in-house main study.</p></main></body></html>

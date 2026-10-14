@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "evaluation_subject_count": 65,
+  "expected_total_records": 1755,
+  "final_long_table_row_count": 1755,
+  "final_group_count": 27,
+  "duplicate_eligible_records": 0,
+  "failed_eligible_records": 0,
+  "cross_model_mask_consistency": {
+    "absolute_tolerance": 1e-12,
+    "groups_checked": 585,
+    "issue_count": 0,
+    "issues": [],
+    "status": "PASS"
+  },
+  "source_csv_sha256": "ecaaca4b3d05d83b90fdf659ad94c8069b22131e65d666b6819f93a1b845bb69",
+  "public_csv_sha256": "72f156713907c8062f87e431abcab84470d9aed33dbbd51ee8c7f10fb75e2830",
+  "identifier_policy": "Release-specific case IDs; private linkage table excluded",
+  "export_version": "main-v1",
+  "aggregation": "equal frame mean within subject; equal-weight subject summary",
+  "source_numeric_values_preserved": true
+}

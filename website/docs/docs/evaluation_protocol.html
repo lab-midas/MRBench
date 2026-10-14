@@ -1,0 +1,168 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>CMRBench reconstruction evaluation protocols</h1>
+<h2>Versioned reporting policy</h2>
+<p>CMRBench reconstruction reports must name an immutable protocol version. The
+current policy is:</p>
+<ul>
+<li><strong>Primary:</strong> <code>cmrbench_recon_metrics_v2_subject_p995</code>, selected as
+  <code>v2_subject_p995</code>. This is the subject-normalized cross-model reconstruction
+  protocol for new benchmark evaluation.</li>
+<li><strong>Secondary diagnostic:</strong> <code>cmrbench_recon_metrics_v1</code>, selected as
+  <code>v1_raw</code>. This is the preserved raw-magnitude, amplitude-sensitive protocol.</li>
+</ul>
+<p>Historical v1 JSON/CSV artifacts remain valid and must not be overwritten or
+silently reinterpreted. CMRBench v2 is a deliberate project convention, not a
+claim of a universal MRI reconstruction standard.</p>
+<h2>Metrics v2: primary subject-normalized protocol</h2>
+<h3>Magnitude domain and one scale per complete subject source</h3>
+<p>For canonical subject volumes <code>[S,T,X,Y]</code>:</p>
+<pre><code class="language-text">R = abs(reference)
+Z = abs(zero_filled)
+X = abs(reconstruction_candidate)
+
+s_R = P99.5(R over every S,T,X,Y value)
+s_Z = P99.5(Z over every S,T,X,Y value)
+s_X = P99.5(X over every S,T,X,Y value)
+
+R_n = R / s_R
+Z_n = Z / s_Z
+X_n = X / s_X
+</code></pre>
+<p>Each source is normalized independently. There is exactly one scalar per
+subject per image source—not per slice, phase, frame, pixel, or coil. Candidate
+scales do not use the reference, and no least-squares/reference-fitted gain is
+estimated.</p>
+<p>Each p99.5 scale must be positive and finite. An all-zero or nonfinite source
+is an explicit invalid evaluation condition. No epsilon is added and no silent
+repair is permitted.</p>
+<h3>No scientific clipping</h3>
+<p>Normalized arrays are <strong>not</strong> clipped to <code>[0,1]</code>. Values such as <code>1.05</code>, <code>1.4</code>,
+or <code>3.0</code> remain in the metric inputs. This preserves penalties from isolated
+bright artifacts, local overshoot, and other signal above the robust subject
+scale. P99.5 is used instead of the maximum so one extreme pixel does not set
+the complete cine's scale.</p>
+<h3>Frame metrics</h3>
+<p>After subject normalization, metrics are evaluated independently for every 2-D
+<code>(slice, phase)</code> frame.</p>
+<pre><code class="language-text">NRMSE_v2 = ||X_n - R_n||_2 / ||R_n||_2
+
+MSE_v2   = mean((X_n - R_n)^2)
+PSNR_v2  = 10 * log10(1.0^2 / MSE_v2)
+</code></pre>
+<p>SSIM is:</p>
+<pre><code class="language-python">skimage.metrics.structural_similarity(
+    R_n,
+    X_n,
+    data_range=1.0,
+    win_size=7,
+    gaussian_weights=False,
+)
+</code></pre>
+<p>PSNR and SSIM always use <code>data_range=1.0</code>, including when normalized arrays
+contain values above one. No candidate-derived or rare-outlier-derived data
+range is substituted.</p>
+<p>ZeroFilled uses the identical v2 evaluator: its complete subject magnitude is
+divided by its own <code>s_Z</code>, then compared frame-by-frame with <code>R_n</code>.</p>
+<h3>Subject and cohort aggregation</h3>
+<p>Every frame-level value is retained. The subject endpoint is the equal
+arithmetic mean over all <code>S*T</code> frames. Pixels are not flattened into one
+subject metric, and slices/phases are not differentially weighted. Planned
+cohort aggregation remains:</p>
+<pre><code class="language-text">frame metrics -&gt; equal frame mean within subject -&gt; equal-weight subject summary
+</code></pre>
+<h3>Required amplitude-scale diagnostics</h3>
+<p>Every v2 result records:</p>
+<ul>
+<li><code>reference_p99_5</code>;</li>
+<li><code>zero_filled_p99_5</code>;</li>
+<li><code>candidate_p99_5</code>;</li>
+<li><code>zero_filled_to_reference_p99_5_ratio</code>;</li>
+<li><code>candidate_to_reference_p99_5_ratio</code>.</li>
+</ul>
+<p><code>normalized_max</code> and <code>fraction_of_values_above_1</code> may also be recorded as QA.
+These scale fields are diagnostics, not ranking metrics.</p>
+<h2>Metrics v1: preserved raw amplitude-sensitive diagnostic</h2>
+<p>Metrics v1 remains numerically unchanged:</p>
+<pre><code class="language-text">r = abs(reference_frame)
+c = abs(candidate_frame)
+
+NRMSE_v1 = ||c-r||_2 / ||r||_2
+
+MSE        = mean((c-r)^2)
+data_range = max(r)-min(r)
+PSNR_v1    = 10*log10(data_range^2/MSE)
+</code></pre>
+<p>SSIM v1 uses the same raw reference-derived <code>data_range</code>, <code>win_size=7</code>, and
+<code>gaussian_weights=False</code>. It applies no normalization, gain fitting, histogram
+matching, or clipping. It remains valuable for exposing absolute-amplitude
+discrepancies, but it is no longer the primary cross-model reconstruction
+ranking protocol.</p>
+<p>The legacy functions <code>compute_frame_metrics(...)</code> and calls to
+<code>compute_cine_frame_metrics(...)</code> without a protocol argument retain v1
+semantics for backward compatibility. New evaluations must pass
+<code>protocol="v2_subject_p995"</code> explicitly.</p>
+<h2>Why the primary protocol changed</h2>
+<p>Pretrained reconstruction models may emit the same spatial reconstruction
+under different positive global output-intensity conventions. A global scale
+should not dominate the primary cross-model anatomical reconstruction result.
+Independent full-subject p99.5 normalization removes that one global gain while
+remaining robust to an isolated maximum. The absence of clipping still
+penalizes localized high-intensity errors. Raw v1 remains alongside v2 so
+absolute-amplitude fidelity is never hidden.</p>
+<h2>QC v1 science remains frozen and complementary</h2>
+<p>This visualization refinement does not change QC error definitions or image
+scaling semantics.</p>
+<ul>
+<li>Anatomy QC independently autoscales panels and displays scale-invariant
+  structural error.</li>
+<li>Fidelity QC uses the raw reference-derived display window and shows
+  amplitude-sensitive error.</li>
+</ul>
+<p>QC display saturation does not clip scientific metric arrays. Metrics v2
+normalization must not be applied to QC v1 figures.</p>
+<p>Generic Anatomy and Fidelity figures use the Matplotlib <code>turbo</code> error-map
+colormap with an unlabeled colorbar. Each selected phase is a 2x3 block:
+Reference/Zero-filled/Reconstruction above the verified canonical sampling
+mask/ZF Error map/Reconstruction Error map. Phase blocks are arranged
+side-by-side. The mask is selected as <code>canonical_mask[s,t,:,:]</code>; its concise
+title reports the already validated global complete-mask actual R, never a
+new per-frame acceleration. Anatomy errors are display-saturated with
+<code>vmin=0,vmax=0.2</code>; Fidelity errors retain <code>vmin=0,vmax=1</code>. Neither scientific
+error array is numerically clipped.</p>
+<h3>Formal generic QC frame selection</h3>
+<p>Generic evaluation uses <code>mid_slice_fixed_phases_v1</code>. For the actual canonical
+evaluated shape <code>[S,T,X,Y]</code>, it selects <code>(S//2,6)</code> and <code>(S//2,22)</code>; both phase
+indices are zero-based. The selector never reads a manifest <code>SLICE_DIM</code>. If
+<code>T&lt;=22</code>, evaluation fails unless the experiment explicitly supplies valid
+<code>evaluation.qc.phase_indices</code>; it does not clamp or revert to the historical
+first/middle/last display policy. This changes displayed frames only: Metrics
+v2 still consumes every one of the <code>S*T</code> frames, and the frozen Anatomy and
+Fidelity QC computations and image-scaling semantics are unchanged.</p>
+<p>When enabled, the optional candidate-only
+<code>&lt;subject&gt;_mid_slice_reconstruction.gif</code> displays
+<code>abs(reconstruction[S//2,0:T])</code>. One linear <code>[0,max(abs(mid-slice cine))]</code>
+window is fixed across every temporal frame. This visualization neither
+modifies the saved candidate nor participates in any metric.</p>
+<h2>Reference and large-array policy</h2>
+<p>The benchmark target remains <code>abs(canonical reference)</code>. The informational
+complete-multicoil RSS sanity audit does not replace it, and no SDUM-specific
+target is introduced. Saved RAM/SDUM reconstructions stay server-side; metrics
+scripts read them there and produce new versioned JSON/CSV artifacts.</p>
+<h2>Implementation</h2>
+<ul>
+<li>Versioned common metrics:
+  <code>cmrbench/evaluation/reconstruction_metrics.py</code></li>
+<li>Frozen common QC:
+  <code>cmrbench/evaluation/reconstruction_qc.py</code></li>
+<li>Generic evaluation entry point and formal frame selector:
+  <code>cmrbench/evaluate.py</code></li>
+<li>Candidate-only fixed-window GIF:
+  <code>cmrbench/evaluation/reconstruction_gif.py</code></li>
+<li>RAM saved-output reevaluation:
+  <code>scripts/evaluate_reconstruction_metrics.py</code></li>
+<li>SDUM Phase-3C saved-output reevaluation:
+  <code>scripts/sdum_phase3c_evaluate_r8.py</code></li>
+</ul>
+<p>Metrics v2 outputs use <code>_v2</code> filenames and fresh output directories. Existing
+Metrics v1 JSON/CSV/PNG files are not overwritten.</p></main></body></html>

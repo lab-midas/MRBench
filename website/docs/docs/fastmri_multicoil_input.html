@@ -1,0 +1,88 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>fastMRI multi-coil input preparation</h1>
+<p>This capability prepares static fastMRI slices without changing the generic
+reconstruction entry, <code>SamplingProtocol</code>/<code>SamplingResult</code>, <code>ReconstructionInput</code>,
+or any model adapter.  It does not run a reconstruction model.</p>
+<h2>Data and geometry</h2>
+<p>The low-level <code>cmrbench.data.fastmri.load_fastmri_multicoil_slice</code> reads one selected
+HDF5 slice from <code>kspace</code> and <code>reconstruction_rss</code>.  Raw complex k-space is
+official fastMRI <code>[C,H,W]</code>.  The RSS array supplies the reference spatial shape
+and an optional magnitude reference; it is not used as a complex model input.</p>
+<p>Before sampling, every coil is transformed with a centered orthonormal IFFT,
+center-cropped identically in the complex image domain, and transformed back
+with the inverse centered orthonormal FFT convention.  There is no resize,
+RSS/VCC, coil compression, magnitude conversion, or intensity normalization.
+The resulting mappings are:</p>
+<ul>
+<li>k-space <code>[C,H,W] -&gt; [1,1,H,W,C]</code>;</li>
+<li>reference <code>[H,W] -&gt; [1,1,H,W]</code>.</li>
+</ul>
+<p>The generic dataset wrapper also supports <code>dataset.selection.slices: all</code> for
+one volume, preserving selected slices as <code>S</code> with <code>T=1</code>. Selecting one integer
+slice uses the low-level mapping above. A configuration template is in
+<a href="../examples/fastmri_ram.yaml"><code>../examples/fastmri_ram.yaml</code></a>; external data and
+the model/calibration runtimes are still required.</p>
+<p><code>build_fastmri_multicoil_slice</code> returns an unsampled <code>CineMRISample</code>.  The
+existing <code>prepare_reconstruction_input</code> must then realize the physical mask and
+broadcast it across coils.  Only after that step may
+<code>attach_prepared_sensitivity_maps</code> run.</p>
+<h2>Sensitivity-map strategies</h2>
+<p>Dataset parameters use <code>sensitivity_maps.source</code>; <code>strategy</code> is accepted as an
+equivalent programmatic spelling.  The complete example is in
+<code>configs/datasets/fastmri_multicoil.yaml</code>.</p>
+<p><code>provided</code> validates canonical <code>[S,1,X,Y,C]</code> or <code>[S,T,X,Y,C]</code> shape, slice/time,
+spatial geometry, coil count, complex dtype, and finite values.  Values,
+normalization, phase, coil ordering, and coil basis are not modified.</p>
+<p><code>espirit</code> uses direct SigPy <code>EspiritCalib</code> on CPU.  The input-preparation extra
+pins <code>sigpy==0.1.27</code>; it is intentionally independent of the RAM runtime and
+DeepInv.  Defaults mirror SigPy's public API: kernel width 6, calibration-matrix
+threshold (<code>thresh</code>) 0.02, eigenvalue crop threshold (<code>crop</code>) 0.95, and 100
+iterations.  An explicit
+<code>calib_width</code> may be requested. At the low-level estimator API, <code>null</code> uses
+the detected realized ACS extent; formal generic experiments do not rely on
+that fallback. They resolve the requested width from physical sampling
+(<code>ncalib</code>, or <code>round(runtime Ky * center_fraction)</code>) before calling ESPIRiT.
+An explicitly configured <code>calib_width</code> must match that requested width.
+The realized ACS extent remains a feasibility check and separate provenance,
+not the default generic calibration policy. The current CMRBench fastMRI
+benchmark's <code>ncalib=24</code> is a chosen acquisition setting, not a fastMRI format
+requirement.</p>
+<p>ACS is detected from the actual canonical <code>[S,T,Kx,Ky]</code> mask.  A Ky line is
+eligible only if every Kx location is acquired across all represented slices
+and frames.  The detector selects the largest contiguous strip that contains
+the center (both center-adjacent lines for even Ky).  Missing central support is
+an error.  Fully sampled lines outside this contiguous strip are ignored.</p>
+<p>The estimator receives a freshly zeroed calibration array containing only the
+selected ACS copied from the already masked/acquired k-space.  It can never use
+unacquired samples from the original full source, even if a caller accidentally
+passes nonzero values outside the realized mask.  ESPIRiT currently accepts
+only static <code>T=1</code>; output is canonical <code>[S,1,X,Y,C]</code>.</p>
+<p>Provenance is stored under <code>ReconstructionInput.metadata</code> key
+<code>cmrbench_sensitivity_maps</code>.  It includes source, backend and version, detected
+ACS bounds/extent, requested parameters, actual calibration region, kernel,
+crop and threshold values, input/output shapes, coil count, prewhitening state,
+and exact normalization/phase/basis handling.</p>
+<h2>Required ordering</h2>
+<p>For fully sampled fastMRI train/validation files:</p>
+<ol>
+<li>load one raw multi-coil slice;</li>
+<li>image-domain center crop to reference geometry;</li>
+<li>map to canonical full k-space;</li>
+<li>call the existing sampler and apply its realized mask;</li>
+<li>call <code>attach_prepared_sensitivity_maps</code> with <code>provided</code> or <code>espirit</code>;</li>
+<li>pass the unchanged <code>ReconstructionInput</code> contract to RAM.</li>
+</ol>
+<p>Estimating maps before retrospective sampling is not a supported default.
+SDUM and CardioMM are unchanged and may continue to ignore externally attached
+maps according to their existing adapters.</p>
+<h2>Preflight</h2>
+<p>The following command selects one volume and one slice, performs crop,
+canonical mapping, existing Cartesian sampling, realized-ACS ESPIRiT, and
+validation.  It does not instantiate or run any model:</p>
+<pre><code class="language-bash">python scripts/preflight_fastmri_multicoil_input.py \
+  --fastmri-root /mnt/qdata/rawdata/fastMRI/brain/multicoil_val
+</code></pre>
+<p>If no root is supplied, the script checks <code>FASTMRI_ROOT</code> followed by the known
+brain and knee validation locations and reports a clean <code>skipped</code> result when
+none is accessible.</p></main></body></html>

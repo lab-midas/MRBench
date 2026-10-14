@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Canonical data specification</h1>
+<h2><code>CineMRISample</code></h2>
+<p><code>CineMRISample</code> is the dataset boundary. Its fields are:</p>
+<pre><code class="language-text">kspace:           [S,T,Kx,Ky,C]
+mask:             [S,T,Kx,Ky] or None
+reference:        [S,T,X,Y] or None
+sensitivity_maps: [S,1,X,Y,C] or supported [S,T,X,Y,C]
+metadata:        sample/cohort provenance
+</code></pre>
+<p><code>CineMRISample.kspace</code> may contain either complete or prospectively
+undersampled measurements. For complete benchmark starting data, <code>mask=None</code> is
+preferred. For acquired undersampled data, <code>mask</code> is the actual acquisition
+mask and must not be discarded.</p>
+<p>K-space is expected to be complex-valued. Version 0.1 does not force a specific
+tensor library or complex precision; adapters may convert privately and record
+that conversion.</p>
+<p>The loader performs no model-specific resizing, normalization, cropping, axis
+permutation, or coil compression. Subjects may have different spatial sizes and
+coil counts. A reference and sensitivity maps are both optional.</p>
+<p>For current in-house cine, X/Kx is frequency encoding and Y/Ky is phase
+encoding. Trusted time-averaged sensitivity maps use <code>[S,1,X,Y,C]</code> and
+broadcast over T. A future dataset may provide <code>[S,T,X,Y,C]</code>.</p>
+<p>The in-house reader loads the stored <code>[S,T,X,Y,1]</code> normalized coil-combined
+reference and sensitivity maps, multiplies them to obtain coil images, and uses
+<code>fft2c</code> to synthesize complete benchmark k-space. This is starting k-space for
+retrospective evaluation, not raw acquired scanner k-space.</p>
+<h2><code>ReconstructionInput</code></h2>
+<p><code>ReconstructionInput</code> is the model boundary:</p>
+<pre><code class="language-text">kspace: [S,T,Kx,Ky,C]
+mask:   [S,T,Kx,Ky]
+</code></pre>
+<p>Unlike the sample, it always describes actual measurements given to the model
+and therefore has an explicit coil-independent mask. Retrospective preparation
+generates and applies the mask. Acquired preparation uses dataset k-space and
+mask directly. An optional full-data/R=1 experiment can generate an all-ones
+mask.</p>
+<p>For the full-data diagnostic, the established sensitivity-weighted adjoint gives
+approximately <code>reference * sum(|sensitivity_maps|^2, coil)</code>. The server smoke
+test therefore calls this an adjoint consistency check and separately reports
+the discrepancy from the original reference. It does not divide by map power.</p>
+<p>Model adapters must adapt to the canonical representation rather than changing
+the canonical representation to match the model. Permutations, padding,
+normalization, coil compression, device movement, and inverse transformations
+belong inside the adapter and should be recorded as <code>TransformRecord</code> entries.</p>
+<p>Validation is intentionally lightweight: k-space must be five-dimensional,
+masks exactly match its first four dimensions, and a reference must match slice
+and time dimensions. Spatial matrix sizes are not compared across subjects.</p></main></body></html>

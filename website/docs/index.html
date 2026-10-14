@@ -1,0 +1,234 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../index.html">← Back to dashboard</a><h1>CMRBench</h1>
+<p>CMRBench provides a shared way to ask how pretrained reconstruction models
+behave when cardiac MRI acquisition conditions change. The same measurements
+and physical sampling mask can be passed to SDUM, CardioMM and RAM, while each
+model keeps its own released preprocessing and runtime. Results can then be
+evaluated with one versioned protocol and explored in an interactive dashboard.</p>
+<p>This is an <strong>early research snapshot prepared for abstract submission</strong>.
+It includes the generic reconstruction interface, three model integrations,
+sampling tools, simulation scripts and a frozen main experiment. Additional
+robustness and cross-dataset experiments will be added as their results become
+available. An available adapter or simulation does not imply a completed cohort
+evaluation.</p>
+<p><img alt="How data move through CMRBench" src="docs/assets/pipeline.svg" /></p>
+<h2>Try the interface in a few minutes</h2>
+<p>Start with a small synthetic cine. This example exercises the same dataset,
+sampling and reconstruction entry point as the real experiments, using a
+zero-filled baseline. It needs no patient data, GPU, model weights or external
+model repository. Use Python 3.10 or newer for the core package.</p>
+<pre><code class="language-bash">python -m pip install -e .
+python examples/make_toy_data.py
+python -m cmrbench.reconstruct --config examples/toy_reconstruction.yaml
+python -m cmrbench.evaluate --reconstruction-dir outputs/toy_reconstruction
+</code></pre>
+<p>Run these commands from the repository root. The reconstruction command saves
+arrays, configuration and provenance; the evaluation command reads those
+outputs and writes Metrics v2, QC figures and a cine animation. Keeping these
+steps separate also lets you evaluate an existing reconstruction without
+running its model again. See <a href="docs/getting_started.html">the walkthrough</a> for
+output locations and for moving from the toy example to your own data.</p>
+<p>To run RAM on prepared cardiac cine, edit the data paths in
+<a href="examples/cine_ram.yaml"><code>examples/cine_ram.yaml</code></a>, make CMRBench importable in your
+RAM runtime, then call the same entry point:</p>
+<pre><code class="language-bash">python -m cmrbench.reconstruct --config examples/cine_ram.yaml
+</code></pre>
+<p>The model section references a small model YAML. Replacing that reference with
+<code>../configs/models/sdum_base.yaml</code> or <code>../configs/models/cardiomm.yaml</code> selects
+another adapter; first configure that model's assets and acquisition metadata.
+The core installation alone does not install all three model runtimes. Use
+separate environments and follow <a href="docs/models.html">the model setup guide</a>.</p>
+<h2>Bring your data into a common representation</h2>
+<p>At the dataset boundary, a sample contains complex multi-coil k-space, optional
+reference images, optional coil sensitivity maps, and acquisition metadata.
+Every model ultimately receives an explicit physical mask alongside its actual
+undersampled measurements. The reference is used for evaluation, not supplied
+to the reconstruction model as a target.</p>
+<table>
+<thead>
+<tr>
+<th>Array</th>
+<th>Canonical shape</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>K-space</td>
+<td><code>[S,T,Kx,Ky,C]</code></td>
+<td>Slice, cardiac phase, two spatial frequency axes, coil</td>
+</tr>
+<tr>
+<td>Sampling mask</td>
+<td><code>[S,T,Kx,Ky]</code></td>
+<td>Binary physical sampling support, shared across coils</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td><code>[S,T,X,Y]</code></td>
+<td>Optional image target for evaluation</td>
+</tr>
+<tr>
+<td>Sensitivity maps</td>
+<td><code>[S,1,X,Y,C]</code> or <code>[S,T,X,Y,C]</code></td>
+<td>Complex maps; a singleton time axis broadcasts across phases</td>
+</tr>
+</tbody>
+</table>
+<p>For the current cardiac reader, X/Kx is the frequency-encoding axis and Y/Ky
+is the phase-encoding axis. The reader loads prepared complex coil-combined
+images and sensitivity maps, forms coil images and applies a centered FFT.
+<strong>This produces constructed benchmark k-space, not raw scanner k-space.</strong>
+The exact filenames and a minimal manifest are explained in
+<a href="docs/data.html">the data guide</a>.</p>
+<p>A fastMRI multi-coil reader is also included. It maps selected static slices
+into the same representation with <code>T=1</code>; this input capability does not imply
+a completed brain/knee cohort benchmark. CMRxRecon integration and additional
+cross-dataset evaluations remain future work. New dataset readers can use the
+same interface without changing the reconstruction models.</p>
+<h2>What each model needs</h2>
+<p>The shared interface keeps input handling consistent, but the models make
+different assumptions. Their adapters preserve those differences explicitly.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Inputs beyond k-space and mask</th>
+<th>Current behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RAM, DeepInv backend</td>
+<td>Provided or acquired-ACS-estimated sensitivity maps; DeepInv 0.3.5 runtime</td>
+<td>Framewise complex reconstruction using a multi-coil forward operator</td>
+</tr>
+<tr>
+<td>RAM, pinned GitHub backend</td>
+<td>Sensitivity maps and pinned external RAM source</td>
+<td>Alternative historical backend; not the main table's backend</td>
+</tr>
+<tr>
+<td>SDUM Small/Base/Large</td>
+<td>Released source, checkpoint/config, acquisition category and sampling conditioning; usable acquired calibration support</td>
+<td>Temporal windows; estimates maps internally; returns RSS magnitude</td>
+</tr>
+<tr>
+<td>CardioMM</td>
+<td>Released source, checkpoint, local CLIP assets and six acquisition metadata fields; calibration and sampling conditioning</td>
+<td>Framewise reconstruction; estimates maps internally</td>
+</tr>
+<tr>
+<td>Zero-filled baseline</td>
+<td>Sensitivity maps</td>
+<td>Centered inverse FFT and sensitivity-weighted coil combination</td>
+</tr>
+</tbody>
+</table>
+<p>CardioMM needs <code>lifespan</code>, <code>field_strength</code>, <code>vendor</code>, <code>scanner</code>, <code>modality</code> and
+<code>view</code>. Fill these with the acquisition's actual values. SDUM Base/Large also
+use acquisition and sampling labels. Physical sampling and model conditioning
+are recorded separately: an unsupported pattern must not be silently renamed
+to a supported one. See <a href="docs/models.html">model setup and compatibility</a>.</p>
+<h2>Explore acquisition changes</h2>
+<p>CMRBench separates the physical sampler from the model. This is essential when
+asking how the same model behaves under a sampling shift, or comparing models
+on the same measurements.</p>
+<table>
+<thead>
+<tr>
+<th>Sampling family</th>
+<th>Available selectors</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uniform Cartesian</td>
+<td><code>uniform</code>: canonical, SDUM or CardioMM</td>
+<td>Fixed pattern; centering and ACS policy are explicit</td>
+</tr>
+<tr>
+<td>Spatiotemporal Cartesian</td>
+<td><code>kt_uniform</code>, <code>kt_gaussian</code>: SDUM or CardioMM</td>
+<td>Released implementations are selected explicitly</td>
+</tr>
+<tr>
+<td>Pseudo-radial</td>
+<td><code>kt_radial</code>: SDUM or CardioMM; <code>radial</code>: CardioMM</td>
+<td>Rasterized Cartesian support, not a non-Cartesian NUFFT acquisition</td>
+</tr>
+<tr>
+<td>Static Cartesian</td>
+<td><code>random</code>: SDUM or CardioMM; <code>equispaced</code>: SDUM</td>
+<td>Suitable for static inputs subject to model compatibility</td>
+</tr>
+<tr>
+<td>VISTA</td>
+<td><code>vista</code>: precomputed or CMRBench port</td>
+<td>Model conditioning/calibration compatibility must be checked</td>
+</tr>
+<tr>
+<td>Supplied masks</td>
+<td><code>external_mask</code></td>
+<td>Validate and preserve the actual mask and provenance</td>
+</tr>
+</tbody>
+</table>
+<p>The package also exposes an independently implemented <code>RandomCartesianSampling</code>
+class for programmatic use; it is not a registered YAML selector in this
+snapshot. A registered sampler is not a promise that every model supports it.</p>
+<p>Always retain <strong>nominal R and actual R</strong>. Central calibration support and the
+released pseudo-radial rasterization can materially change the acquired sample
+fraction. The frozen main experiment uses the CardioMM implementations of the
+three k-t families, nominal R=8/16/24, ACS width 20 and seed 1.</p>
+<h2>Read the results</h2>
+<p>The <a href="../index.html">dashboard</a> contains 1,755 audited subject-level results:
+65 subjects, three models, three sampling families and three nominal
+accelerations. Models are SDUM Base, CardioMM and RAM DeepInv. Each of the 27
+condition groups includes the same 65 subjects, and the cross-model physical
+mask audit passed. CSV values are retained from the finalized source; subject
+identifiers are replaced with release-specific case IDs.</p>
+<p>Serve the static site locally:</p>
+<pre><code class="language-bash">python -m http.server 8000 --directory website
+</code></pre>
+<p>Open <code>http://localhost:8000</code>. The site supports condition filters, subject
+distributions, acceleration trends, sampling-pattern comparisons, paired model differences and downloadable
+metrics. Only acceleration and k-t sampling results are included. Qualitative
+evaluation and other test results remain empty placeholders. See
+<a href="website/README.html">the dashboard guide</a> for deployment and adding experiments.</p>
+<p>Primary Metrics v2 normalize each complete subject image source independently
+by its magnitude p99.5, without clipping, then calculate frame metrics. The
+subject endpoint is the equal mean across frames, and cohort summaries give
+equal weight to subjects. Raw-amplitude Metrics v1 remain a separate diagnostic.
+See <a href="docs/evaluation_protocol.html">the evaluation protocol</a>.</p>
+<p>No existing result images or cine animations are distributed in this release.
+When qualitative panels are added, their physical masks and display conventions
+will be recorded. Runtime values are
+reported descriptively; hardware and timing scope must be matched before making
+efficiency claims.</p>
+<h2>Reproduce or extend an experiment</h2>
+<p>The simulation tools include complex Gaussian measurement noise, cardiac
+mistriggering, a respiratory-translation surrogate, global input scaling and
+magnitude-derived synthetic k-space. The <a href="experiments/README.html">experiment guide</a>
+explains the settings, what is held fixed, and the evidence currently shipped.
+Slurm helpers are study-specific templates; they preserve the original frozen
+66-subject task schema while the final published main table contains 65 eligible
+subjects. See their README before creating or submitting manifests.</p>
+<p>For new datasets, models or samplers, register one component and keep the
+canonical interfaces intact. For new dashboard experiments, add a manifest entry
+and a versioned data file. <a href="docs/extending.html">The extension guide</a> describes
+these boundaries and the result schema.</p>
+<h2>Release status and attribution</h2>
+<p>Authors, affiliations and the first-party code license will be finalized before
+the formal release. A project-wide license has not yet been assigned. Third-party
+components retain their own terms and notices, including the VISTA research-use
+notice and NVIDIA/MONAI sampling attribution. The pinned CardioMM sampling
+adaptation has an academic-use statement but no standard license in the audited
+source; redistribution terms need resolution before uploading that component.
+See <a href="THIRD_PARTY_NOTICES.html">third-party notices</a> and
+<a href="docs/release_scope.html">release scope</a>.</p>
+<p>This snapshot excludes patient arrays, model weights, external model repositories,
+private result linkage tables, development histories and site-specific IDE files.
+It can be maintained together with the dashboard in one public CMRBench repo.</p></main></body></html>

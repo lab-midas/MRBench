@@ -1,0 +1,51 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Keeping CMRBench extensible</h1>
+<p>The framework boundary is dataset → sample → sampling → reconstruction input →
+model → result → evaluation. Preserve these contracts when adding a component.</p>
+<p>For a new dataset, subclass <code>CineMRIDataset</code>, return <code>CineMRISample</code>, and register
+a factory with <code>DatasetRegistry</code>. Keep physical acquisition masks when present.
+Define reference meaning, complex phase handling, axes and selection explicitly;
+do not put model-specific normalization in the reader.</p>
+<p>For a new model, implement <code>ReconstructionModel</code>, register a lazy factory with
+<code>ModelRegistry</code>, and return the candidate plus transform/provenance records.
+Perform private tensor conversions inside the adapter. Validate supported
+conditioning and calibration before inference. For a new sampler, implement
+<code>SamplingProtocol</code> and return <code>SamplingResult</code> with the realized mask, actual R,
+ACS policy and implementation provenance. Register different source algorithms
+as explicit implementations rather than overloading a name based on the model.</p>
+<h2>Growing the dashboard</h2>
+<p><code>website/data/experiments.json</code> is the experiment registry. Each entry has a
+stable ID, category, evidence status, description, settings, limitations,
+optional <code>metrics_path</code> and optional qualitative asset. The Results selector
+derives its quantitative options from entries with a metrics file. Keep frozen
+experiment IDs immutable; add another ID for a changed protocol or dataset.</p>
+<p>The current quantitative loader expects a JSON array of subject-level records:</p>
+<pre><code class="language-json">{
+  &quot;subject&quot;: &quot;Case-001&quot;, &quot;model&quot;: &quot;RAM&quot;,
+  &quot;variant_or_implementation&quot;: &quot;deepinv&quot;,
+  &quot;dataset&quot;: &quot;inhouse_cine&quot;, &quot;experiment_id&quot;: &quot;main-v1&quot;,
+  &quot;sampling&quot;: &quot;kt_uniform&quot;, &quot;sampling_implementation&quot;: &quot;cardiomm&quot;,
+  &quot;requested_R&quot;: 8, &quot;actual_R&quot;: 7.1,
+  &quot;NRMSE&quot;: 0.12, &quot;PSNR&quot;: 31.0, &quot;SSIM&quot;: 0.90,
+  &quot;runtime_sec&quot;: 50, &quot;status&quot;: &quot;passed&quot;,
+  &quot;metric_protocol&quot;: &quot;cmrbench_recon_metrics_v2_subject_p995&quot;,
+  &quot;binary_mask_sha256&quot;: &quot;&lt;real-mask-hash&gt;&quot;
+}
+</code></pre>
+<p>These numbers are schema illustrations, not new benchmark results. Keep a
+downloadable CSV alongside the JSON. Conditions are explicit and paired joins
+use subject ID within the selected dataset, physical sampling and protocol.
+Never pool different datasets, protocols, noise levels or ACS widths under one
+experiment ID. Noise-SNR and other extra dimensions require extending the
+condition controls/grouping, or one registry entry per level. That prevents
+duplicate subject rows from being treated as independent observations.</p>
+<p>Qualitative case entries live in <code>cases.json</code>. Include model variant, physical
+sampling implementation, nominal/actual R when known, display convention,
+provenance and pairing status. A missing metric stays missing. To add matched
+reference/ZF/model panels, export a common-mask case with verified run metadata
+and extend the viewer; archived candidate GIFs do not establish this pairing.</p>
+<p>Core statistics are in <code>website/stats.mjs</code>; rendering is in <code>website/app.mjs</code>.
+There is no framework build or external chart service. Tests cover the statistics
+and main input validation. Data files and assets use relative URLs so the site
+works beneath a GitHub project repository path.</p></main></body></html>

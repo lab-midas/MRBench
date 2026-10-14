@@ -1,0 +1,69 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Setting up the reconstruction models</h1>
+<p>CMRBench provides adapters, not redistributed model repositories or checkpoints.
+Acquire the upstream assets under their own terms and place local paths in the
+appropriate <code>configs/models/*.yaml</code>. Each model keeps its released normalization
+and reconstruction logic. No adapter receives the reference image as a target,
+and these experiments do not fine-tune model weights.</p>
+<h2>RAM</h2>
+<p>The main table uses <code>ram_deepinv.yaml</code>: DeepInv 0.3.5 and
+<code>deepinv.models.RAM(pretrained=True)</code> with the canonical multi-coil MRI operator.
+Install that backend and its compatible torch/CUDA stack in a separate runtime.
+The backend may acquire pretrained assets on first use; prepare its cache if you
+need offline operation. A checkpoint path can be configured explicitly.</p>
+<p>RAM requires complex sensitivity maps. For prepared cine these are provided by
+the dataset; for static fastMRI they may be estimated from acquired ACS using
+the separate preparation path. The adapter adds no external input scaling or
+measurement noise; the physical Gaussian sigma is fixed at zero in this
+snapshot. External noise stress tests are labeled separately and retain that
+model behavior.</p>
+<p><code>ram.yaml</code> selects the alternative <code>official_github</code> backend at RAM commit
+<code>0de1617403291e5a28179097795752200e65b82c</code> with DeepInv 0.3.0. Configure its
+source root separately. It is not the backend in the released main table.
+Upstream: <a href="https://github.com/matthieutrs/ram">https://github.com/matthieutrs/ram</a>,
+<a href="https://github.com/deepinv/deepinv">https://github.com/deepinv/deepinv</a>.</p>
+<h2>SDUM</h2>
+<p>Use the released NVIDIA source at commit
+<code>99be712b2e9fd34bf6a2f709373d311354fbda96</code>. Set <code>sdum_source_root</code>, <code>checkpoint</code>
+and its matching JSON <code>config</code> in <code>sdum_small.yaml</code>, <code>sdum_base.yaml</code> or
+<code>sdum_large.yaml</code>. Preserve the upstream torch/MONAI and model dependencies in
+an isolated runtime. The main table evaluates Base; Small and Large are included
+as adapter capabilities, not additional models in that table.</p>
+<p>The adapter preserves cyclic five-frame temporal windows, internal map
+estimation and RSS magnitude output. Base/Large use acquisition and sampling
+conditioning. Native Cine categories include nominal R=8/16/24 and the released
+uniform/Gaussian/pseudo-radial families. External supplied sensitivity maps do
+not replace the released internal estimator.</p>
+<p>VISTA and other shifted physical patterns may require explicit source-supported
+conditioning, and feasibility still depends on acquired calibration support.
+These are declared out-of-distribution conditions, not evidence of native
+training support. Upstream:
+<a href="https://github.com/NVIDIA/NV-Raw2Insights-MRI">https://github.com/NVIDIA/NV-Raw2Insights-MRI</a>.</p>
+<h2>CardioMM</h2>
+<p>Configure source commit <code>abb6f8a4e293426736467c9859a5f5755c38c8aa</code>, checkpoint and
+local CLIP directory in <code>cardiomm.yaml</code>. The original validated inference runtime
+used Python 3.8.20, torch 2.0.1+cu117, NumPy 1.24.4 and transformers 4.30.2.
+It is separate from the Python &gt;=3.10 core evaluation environment. Use this
+source checkout on <code>PYTHONPATH</code> for the historical runtime, with its compatible
+dependencies; GPU execution in that environment has not been repeated locally.</p>
+<p>Supply actual <code>lifespan</code>, <code>field_strength</code>, <code>vendor</code>, <code>scanner</code>, <code>modality</code> and
+<code>view</code> metadata. The values in the model YAML describe the original study and
+must be changed for your acquisition. The adapter runs framewise, estimates
+maps internally and preserves the validated batch-one cached text-conditioning
+path. Retain batch size 1 for the published numerical contract.</p>
+<p>The model's uniform/random/radial labels are distinct from the physical sampler.
+Automatic conditioning accepts representable families; VISTA requires an
+explicitly declared OOD condition and appropriate calibration rather than a
+silent relabel. Upstream:
+<a href="https://github.com/wangziblake/CardioMM_MMCMR-427K">https://github.com/wangziblake/CardioMM_MMCMR-427K</a>.</p>
+<h2>Compatibility and evidence</h2>
+<p>All models receive canonical measurements and a mask. RAM additionally requires
+external maps; SDUM/CardioMM use their released internal estimators. Calibration
+support, acquisition labels, static-versus-cine geometry and sampling categories
+must be checked for the selected model. The public samplers form a larger set
+than any one model's native supported conditions.</p>
+<p>Changing input data, model assets, dependency versions or conditioning creates
+a new experiment identity. Record source commits, checkpoint hashes, runtime,
+physical mask hash, actual R and requested labels. The config hash is provenance,
+not a substitute for a successful reconstruction or scientific validation.</p></main></body></html>

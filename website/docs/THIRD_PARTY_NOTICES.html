@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+    body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
+    </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../index.html">← Back to dashboard</a><h1>Third-party provenance and license status</h1>
+<p>The first-party CMRBench license and authorship are pending. No license is
+implicitly assigned to upstream code, model weights, dependencies or datasets.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Source</th>
+<th>Terms recorded by the existing project audit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NVIDIA/MONAI sampling adaptation</td>
+<td>NV-Raw2Insights-MRI <code>99be712b2e9fd34bf6a2f709373d311354fbda96</code>, <code>scripts/mri_data/ktSampling.py</code> and wrapper semantics</td>
+<td>Apache-2.0; MONAI Consortium attribution retained in <code>cmrbench/sampling/nvidia.py</code></td>
+</tr>
+<tr>
+<td>VISTA Python port</td>
+<td>OSU-CMR/VISTA <code>1ad7ea0130247aca220a3e761fc8a64b770900b2</code></td>
+<td>Educational, research and not-for-profit permission with attribution and notice; retained verbatim in <code>cmrbench/vista/NOTICE.md</code></td>
+</tr>
+<tr>
+<td>CardioMM sampling adaptation</td>
+<td>CardioMM_MMCMR-427K <code>abb6f8a4e293426736467c9859a5f5755c38c8aa</code></td>
+<td>Academic-use statement reported by the pinned source audit; no standard license file found in that audited commit</td>
+</tr>
+<tr>
+<td>External reconstruction models</td>
+<td>RAM/DeepInv, NVIDIA SDUM, CardioMM and CLIP</td>
+<td>External assets not bundled; follow each upstream repository and checkpoint's terms</td>
+</tr>
+</tbody>
+</table>
+<p>The Apache-2.0 text is in <code>licenses/Apache-2.0.txt</code>; the original copyright and
+attribution statements remain in the adapted source. The VISTA notice is also
+linked from the main README. These are component notices, not a proposed common
+license for the whole repo.</p>
+<p><strong>Publication item:</strong> obtain explicit redistribution clarification for the
+pinned CardioMM sampling adaptation, or replace it with a runtime import from
+user-acquired upstream assets before uploading that component. Its current
+presence in this local review copy must not be interpreted as a legal grant.
+This item matters because the main study uses that physical sampling source;
+silently substituting another implementation would change the experiment.</p>
+<p>This document summarizes the project's pinned source audit. It is not an
+independent confirmation that the current upstream repositories have identical
+terms. Source pages were not retrievable during this local preparation; verify
+the pinned source and retain any additional required notices before publishing.</p></main></body></html>

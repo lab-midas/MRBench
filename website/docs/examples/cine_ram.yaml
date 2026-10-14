@@ -1,0 +1,37 @@
+# Template: replace paths and subject with your own prepared data.
+# Invoke cmrbench.reconstruct from a RAM/DeepInv 0.3.5 environment.
+experiment:
+  name: cine_ram_example
+  seed: 1
+dataset:
+  name: inhouse_cine
+  manifest: /path/to/manifest.csv
+  split: evaluation
+  preprocess_root: /path/to/cine/preprocess
+  selection:
+    subject: ExampleCase
+    slices: all
+  parameters:
+    sensitivity_map_coils: 15
+sampling:
+  mode: retrospective
+  method: kt_uniform
+  implementation: cardiomm
+  acceleration: 8
+  seed: 1
+  parameters:
+    ncalib: 20
+model:
+  config: ../configs/models/ram_deepinv.yaml
+output:
+  root: outputs/cine_ram_example
+  save_reconstruction: true
+  save_metadata: true
+  save_qc: false
+evaluation:
+  enabled: true
+  metric_protocol: cmrbench_recon_metrics_v2_subject_p995
+  qc:
+    enabled: true
+    policy: mid_slice_fixed_phases_v1
+    phase_indices: [6, 22]
