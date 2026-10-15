@@ -1,85 +1,211 @@
-[
-  {
-    "id": "main-v1",
-    "label": "Acceleration & k-t sampling",
-    "category": "Acquisition & measurement robustness",
-    "status": "quantitative",
-    "metrics_path": "data/main_metrics.json",
-    "csv_path": "data/main_metrics.csv",
-    "description": "Compare three pretrained models under increasing retrospective undersampling and three physical sampling patterns.",
-    "settings": "65 subjects; SDUM Base, RAM DeepInv, CardioMM; CardioMM-source k-t uniform/Gaussian/pseudo-radial; nominal R8/16/24; ncalib20; seed1; Metrics v2.",
-    "limitations": "1,755 audited subject endpoints across 27 complete groups. Actual R differs from nominal R. This table covers the in-house constructed-k-space protocol only."
+{
+  "schema_version": 1,
+  "dimensions": [
+    {
+      "id": "acquisition",
+      "name": "Acquisition & Measurement Robustness",
+      "tone": "blue"
+    },
+    {
+      "id": "representation",
+      "name": "Signal Representation & Encoding Robustness",
+      "tone": "yellow"
+    },
+    {
+      "id": "domain",
+      "name": "Domain Generalization",
+      "tone": "green"
+    }
+  ],
+  "data_sources": {
+    "main-v1": {
+      "metrics_path": "data/main_metrics.json",
+      "csv_path": "data/main_metrics.csv",
+      "audit_path": "data/main_audit.json",
+      "metric_protocol": "cmrbench_recon_metrics_v2_subject_p995",
+      "cohort": "In-house cardiac cine · constructed multi-coil k-space",
+      "context": "CardioMM-source physical masks; each subject and condition uses the same realized mask across models. Model-specific normalization, map estimation and conditioning are retained."
+    }
   },
-  {
-    "id": "vista-archive",
-    "label": "VISTA sampling shift",
-    "category": "Acquisition & measurement robustness",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  },
-  {
-    "id": "acs-archive",
-    "label": "Calibration / ACS dependence",
-    "category": "Acquisition & measurement robustness",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  },
-  {
-    "id": "noise-pilot",
-    "label": "Complex measurement noise",
-    "category": "Acquisition & measurement robustness",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  },
-  {
-    "id": "mistrigger-pilot",
-    "label": "Cardiac mistriggering",
-    "category": "Acquisition & measurement robustness",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  },
-  {
-    "id": "respiratory-pilot",
-    "label": "Respiratory motion",
-    "category": "Acquisition & measurement robustness",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  },
-  {
-    "id": "scaling-pilot",
-    "label": "Global input scaling",
-    "category": "Signal representation & encoding robustness",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  },
-  {
-    "id": "magnitude-pilot",
-    "label": "Magnitude-derived synthetic k-space",
-    "category": "Signal representation & encoding robustness",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  },
-  {
-    "id": "dataset-shift",
-    "label": "Cross-dataset generalization",
-    "category": "Domain generalization",
-    "status": "pending",
-    "description": "Results will be added in a future release.",
-    "settings": "See the experiment guide for implemented recipes and the current research plan.",
-    "limitations": "No quantitative table or qualitative result asset is included in this release."
-  }
-]
+  "experiments": [
+    {
+      "id": "acceleration",
+      "name": "Acceleration factor",
+      "dimension": "acquisition",
+      "status": "published",
+      "description": "How does reconstruction quality change as retrospective undersampling becomes more severe?",
+      "setup": [
+        {
+          "label": "Input change",
+          "text": "Retrospectively undersample the same constructed multi-coil k-space at nominal R = 8, 16 and 24, keeping subjects matched across models."
+        },
+        {
+          "label": "Published conditions",
+          "text": "k-t uniform, k-t Gaussian and k-t pseudo-radial masks from the CardioMM implementation; ACS width 20; seed 1. Actual R is measured from each complete realized mask, including ACS."
+        }
+      ],
+      "quantitative": [
+        {
+          "type": "acceleration",
+          "source": "main-v1"
+        }
+      ],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": ["main-v1"],
+      "objective": "Measure how reconstruction quality changes as fewer k-space samples are acquired, testing robustness to increasing undersampling severity."
+    },
+    {
+      "id": "sampling",
+      "name": "Sampling pattern",
+      "dimension": "acquisition",
+      "status": "published",
+      "description": "How robust are pretrained models to changes in the physical sampling pattern?",
+      "setup": [
+        {
+          "label": "Input change",
+          "text": "Compare k-t uniform, k-t Gaussian and k-t pseudo-radial masks at each nominal R = 8, 16 or 24, with matched subjects and cross-model physical masks."
+        },
+        {
+          "label": "Published conditions",
+          "text": "CardioMM mask implementation; ACS width 20; seed 1. Pseudo-radial masks use angle4next = 137.5, cropcorner = true and radial_acceleration_scale = 0.6. These are rasterized Cartesian masks, not NUFFT acquisitions."
+        },
+        {
+          "label": "Interpretation",
+          "text": "Equal nominal R does not imply equal actual sampling density across patterns. Actual R is reported for each condition. VISTA is a future extension and has no published result here."
+        }
+      ],
+      "quantitative": [
+        {
+          "type": "sampling",
+          "source": "main-v1"
+        }
+      ],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": ["main-v1"],
+      "objective": "Assess robustness to sampling shifts by changing the spatial-temporal support of acquired k-space. Each model is evaluated with the same realized mask for a given subject and condition."
+    },
+    {
+      "id": "acs",
+      "name": "ACS dependence",
+      "dimension": "acquisition",
+      "status": "planned",
+      "description": "Evaluate dependence on fully sampled autocalibration signal by varying the ACS region or omitting ACS.",
+      "setup": [
+        {
+          "label": "Planned comparison",
+          "text": "Record ACS geometry and size, realized acceleration, physical-mask provenance and each model's calibration conditioning for every condition. Evaluation levels will accompany the results."
+        }
+      ],
+      "quantitative": [],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": []
+    },
+    {
+      "id": "noise",
+      "name": "Noise",
+      "dimension": "acquisition",
+      "status": "planned",
+      "description": "Evaluate robustness to complex Gaussian measurement noise in acquired multi-coil k-space.",
+      "setup": [
+        {
+          "label": "Planned comparison",
+          "text": "Add circular complex Gaussian noise only to acquired entries, including acquired ACS, and share each noisy measurement across models. Report target and realized SNR, noise seed and map-estimation behavior with the results."
+        }
+      ],
+      "quantitative": [],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": []
+    },
+    {
+      "id": "mistriggering",
+      "name": "Mistriggering motion",
+      "dimension": "acquisition",
+      "status": "planned",
+      "description": "Evaluate sensitivity to cardiac phase inconsistencies using a phase-line replacement surrogate.",
+      "setup": [
+        {
+          "label": "Simulation design",
+          "text": "Replace a configured fraction of acquired phase-encoding lines with lines from another cardiac phase, applying the same corruption across coils. Report the realized replacement count, seed and ACS-preservation policy. This surrogate does not model a full ECG acquisition."
+        }
+      ],
+      "quantitative": [],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": [],
+      "group": "Motion"
+    },
+    {
+      "id": "respiratory",
+      "name": "Respiratory motion",
+      "dimension": "acquisition",
+      "status": "planned",
+      "description": "Evaluate sensitivity to respiratory-like inconsistencies with a controlled k-space translation surrogate.",
+      "setup": [
+        {
+          "label": "Simulation design",
+          "text": "Apply line-dependent k-space phase ramps for sinusoidal in-plane translation along canonical X, indexed by Ky line order. Record amplitude, cycles, phase and ACS preservation. The surrogate does not model nonrigid motion, through-plane displacement or scanner timing."
+        }
+      ],
+      "quantitative": [],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": [],
+      "group": "Motion"
+    },
+    {
+      "id": "scaling",
+      "name": "Global scaling",
+      "dimension": "representation",
+      "status": "planned",
+      "description": "Evaluate sensitivity to the global intensity range of the input measurement.",
+      "setup": [
+        {
+          "label": "Simulation design",
+          "text": "Apply positive global factors to the input measurement while keeping the physical mask, reference and external sensitivity maps fixed. Retain model-specific normalization and raw output units. Report raw-amplitude diagnostics and scale ratios alongside scale-invariant structural quality."
+        }
+      ],
+      "quantitative": [],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": []
+    },
+    {
+      "id": "synthetic-kspace",
+      "name": "Magnitude-derived synthetic k-space",
+      "dimension": "representation",
+      "status": "planned",
+      "description": "Evaluate robustness to altered signal representation when the reference object's phase is removed.",
+      "setup": [
+        {
+          "label": "Simulation design",
+          "text": "Construct fft2c(complex sensitivity maps × abs(complex reference)), then apply the selected physical mask. Object phase is removed while sensitivity-map phase remains. Compare with the magnitude reference and label the input explicitly as synthetic."
+        }
+      ],
+      "quantitative": [],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": []
+    },
+    {
+      "id": "dataset-shift",
+      "name": "Dataset shift",
+      "dimension": "domain",
+      "status": "planned",
+      "description": "Evaluate generalization across datasets, anatomy and acquisition domains.",
+      "setup": [
+        {
+          "label": "Planned comparison",
+          "text": "Future CMRxRecon and fastMRI brain/knee evaluations will state dataset selection, training overlap, reference construction, preprocessing and static/cine geometry separately. Cohorts and metric protocols will remain distinct from the in-house cardiac study."
+        }
+      ],
+      "quantitative": [],
+      "qualitative": [],
+      "illustrations": [],
+      "sources": []
+    }
+  ]
+}

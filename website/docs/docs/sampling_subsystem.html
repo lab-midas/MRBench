@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MRBench documentation</title><style>
     body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
     </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Sampling subsystem</h1>
 <p>The generic physical-mask contract does <strong>not</strong> require a fully sampled central
@@ -7,7 +7,7 @@ their own hard postcondition, while SDUM/CardioMM sensitivity-estimation
 semantics stay model/runtime-specific. See
 <a href="models.html">the public model compatibility guide</a>
 for model-facing calibration requirements and the conditioning boundary.</p>
-<p>CMRBench separates a sampling family (<code>sampling.method</code>) from the concrete
+<p>MRBench separates a sampling family (<code>sampling.method</code>) from the concrete
 generator (<code>sampling.implementation</code>). Model selection never chooses or rewrites
 the generator. <code>prepare_reconstruction_input()</code> applies the returned Boolean
 mask once to complete canonical k-space <code>[S,T,Kx,Ky,C]</code>; every protocol returns
@@ -159,7 +159,7 @@ the established <code>precomputed</code> behavior.</p>
 <td><code>radial/cardiomm</code></td>
 <td><code>ncalib</code></td>
 <td>20</td>
-<td>required initial-angle draw; CMRBench explicitly seeds the source behavior</td>
+<td>required initial-angle draw; MRBench explicitly seeds the source behavior</td>
 </tr>
 <tr>
 <td><code>vista/precomputed</code></td>
@@ -203,7 +203,7 @@ validated defaults. It rejects <code>mask_root</code> and <code>mask_path</code>
 ignoring disk configuration.</p>
 <p>Both sources produce compact Boolean support in <code>[Ky,T]</code> order. The shared
 path transposes it to <code>[T,Ky]</code>, inserts singleton S/Kx axes, and broadcasts it
-to canonical <code>[S,T,Kx,Ky]</code>. The native implementation is the CMRBench Python
+to canonical <code>[S,T,Kx,Ky]</code>. The native implementation is the MRBench Python
 adaptation of the VISTA algorithm (Ahmad et al., MRM 2015), with executable
 reference OSU-CMR/VISTA pinned at
 <code>1ad7ea0130247aca220a3e761fc8a64b770900b2</code>.</p>
@@ -266,7 +266,7 @@ license is Apache-2.0 with the MONAI Consortium notice retained.</p>
 from CardioMM commit <code>abb6f8a4e293426736467c9859a5f5755c38c8aa</code>.
 Its dispatcher SHA-256 is
 <code>67d8af67d927b4c939057cdfb5b2c5c9699eb50ac6ca9aa889817f6dfec59960</code>.
-CMRBench preserves CardioMM's <code>RandomState</code>/inverse-CDF Gaussian path,
+MRBench preserves CardioMM's <code>RandomState</code>/inverse-CDF Gaussian path,
 duplicate repair and scikit-image radial rasterizer. It requires the otherwise
 optional Gaussian seed, uses an exact NumPy Toeplitz expression instead of a
 SciPy constructor, and performs only the canonical transpose/slice broadcast.
@@ -352,7 +352,7 @@ tie behavior: SDUM uses SciPy <code>ndimage.rotate</code>; CardioMM uses
 <code>skimage.transform.rotate(order=0, mode=constant, preserve_range=True)</code>.</p>
 <h2>Historical Random Cartesian note (not a current selector)</h2>
 <p><code>RandomCartesianSampling</code> first appears, already in its present fixed-count
-<code>default_rng.choice</code> form, in CMRBench commit
+<code>default_rng.choice</code> form, in MRBench commit
 <code>18600427341155dc58c15451aa9ec5a56077d3d4</code>. File history, comments and the
 separate fastMRI diagnostic scripts provide no evidence of a fastMRI port.
 It is therefore recorded as an independent <code>cmrbench_native</code> implementation,
@@ -366,7 +366,7 @@ over S and written directly into <code>[S,T,Kx,Ky]</code>. Axis 2 selects Kx ins
 is no ACS. This differs from genuinely joint k-t masks (<code>[Ky,T]</code>) and radial
 masks (<code>[Kx,Ky,T]</code>), and from fastMRI <code>RandomMaskFunc</code> center-fraction plus
 outer-line Bernoulli semantics. This historical implementation is not
-selectable through current generic CMRBench sampling.</p>
+selectable through current generic MRBench sampling.</p>
 <h2>Acceleration and provenance</h2>
 <p><code>sampling.acceleration</code> is always the requested/nominal R used by discrete model
 conditioning. <code>actual_acceleration</code> is recomputed from the final canonical
@@ -391,6 +391,6 @@ smoke tests only, not reconstruction-quality evidence:</p>
   contract tests.</li>
 </ul>
 <p>VISTA supports both the historical precomputed source and the frozen native
-CMRBench generator; model identity does not alter either physical mask path.</p>
+MRBench generator; model identity does not alter either physical mask path.</p>
 <p>The public model guide explains conditioning and compatibility:
 <a href="models.html">model setup and OOD conditions</a>.</p></main></body></html>

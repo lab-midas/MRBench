@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="285" viewBox="0 0 1120 285" role="img" aria-labelledby="title desc">
-<title id="title">CMRBench reconstruction and evaluation pipeline</title><desc id="desc">Canonical dataset samples are physically sampled and passed to separate model adapters. Saved results feed a common evaluator and a static interactive dashboard.</desc>
+<title id="title">MRBench reconstruction and evaluation pipeline</title><desc id="desc">Canonical dataset samples are physically sampled and passed to separate model adapters. Saved results feed a common evaluator and a static interactive dashboard.</desc>
 <defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7" fill="#788698"/></marker></defs>
 <rect width="1120" height="285" rx="20" fill="#f3f6f9"/>
 <g font-family="Arial,sans-serif" font-size="17" fill="#203149" text-anchor="middle">

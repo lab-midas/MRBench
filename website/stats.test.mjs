@@ -63,3 +63,7 @@ test("mixed datasets/protocols cannot enter one leaderboard", () => {
   );
   assert.throws(() => validateRows([rows[0], { ...rows[1], ncalib: 24 }]), /Separate/);
 });
+
+// These architecture and integrity checks also run in the existing Pages workflow.
+import "./architecture.test.mjs";
+import "./data-integrity.test.mjs";

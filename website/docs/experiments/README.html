@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMRBench documentation</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MRBench documentation</title><style>
     body{margin:0;background:#f7f9fa;color:#203149;font:16px/1.75 "Segoe UI",Arial,sans-serif}main{max-width:940px;margin:30px auto;padding:40px;background:white;border:1px solid #dce3e9;border-radius:10px}h1{font-size:36px;letter-spacing:-1px}h2{margin-top:35px;font-size:25px}h3{margin-top:24px}p,li{color:#586a80}a{color:#446d9d}pre{padding:20px;background:#edf2f6;overflow:auto;border-radius:6px;line-height:1.55}code{font-size:13px}table{border-collapse:collapse;width:100%;font-size:13px;display:block;overflow:auto}td,th{padding:12px;border:1px solid #dce3e9;text-align:left}th{background:#edf2f6}img{max-width:100%}.back{font-size:13px}@media(max-width:650px){main{padding:22px;margin:15px}h1{font-size:30px}}
     </style></head><body><main><p style="padding:14px;background:#edf2f6;border-left:3px solid #446d9d">Framework documentation preview. This initial repository release contains the results dashboard; reconstruction framework code will be added separately.</p><a class="back" href="../../index.html">← Back to dashboard</a><h1>Robustness experiments</h1>
 <p>The main study asks how released models respond to acquisition changes. Its
@@ -64,7 +64,7 @@ nominal R=8/16/24, ncalib=20 and seed=1. Pseudo-radial generation retains
 <code>angle4next=137.5</code>, <code>cropcorner=true</code>, <code>radial_acceleration_scale=0.6</code>.
 These are Cartesian rasterized masks; the framework does not imply a NUFFT
 radial acquisition. Actual R is computed from the realized complete mask.</p>
-<p>Each source result is a full-subject Metrics v2 endpoint. Frame means are
+<p>Each source result is a full-subject Subject-normalized metrics endpoint. Frame means are
 computed within each subject, then subjects receive equal weight in cohort
 summaries. The published final groups contain 65 subjects. Historical patient
 task manifests were frozen for 66 subjects and 1,782 tasks, and 27 records from
@@ -130,7 +130,7 @@ input measurement. The physical mask, reference and external sensitivity maps
 are unchanged. Zero-filled output scales linearly; candidate outputs are kept
 in their raw adapter units without dividing by the factor. Each model's internal
 normalization/estimation is preserved.</p>
-<p>Scale-invariant Metrics v2 and anatomy displays can hide global output-gain
+<p>Scale-invariant Subject-normalized metrics and anatomy displays can hide global output-gain
 changes. Include raw-amplitude diagnostics and scale ratios alongside structural
 quality before interpreting scaling robustness. Separate fastMRI VCC/coil
 comparison diagnostics are not interchangeable with this cardiac experiment.</p>
