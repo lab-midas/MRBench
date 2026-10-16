@@ -1,11 +1,11 @@
 # MRBench: Benchmarking Foundation Models for MRI Reconstruction
 
-MRBench is an extensible benchmark for evaluating foundation models for MRI
-reconstruction across acquisition conditions, signal representations and imaging
-domains. It supports systematic comparisons of reconstruction quality and robustness.
+MRBench is a benchmark for evaluating foundation models for MRI reconstruction 
+across acquisition conditions, signal fidelities, and imaging domains. 
+It supports systematic comparisons of reconstruction quality.
 
-This public release contains the interactive dashboard and audited quantitative
-results. The complete Python benchmarking framework is being prepared for public release.
+This public release contains the interactive dashboard. 
+The complete Python benchmarking framework is being prepared for public release.
 
 ## Framework Overview
 
