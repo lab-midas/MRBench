@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { experimentURL, parseRoute, resolveExperimentView, hasResults } from "./registry.mjs";
 import { PROTOCOL } from "./protocol.mjs";
 const registry = JSON.parse(readFileSync(new URL("./data/experiments.json", import.meta.url)));
@@ -75,4 +76,42 @@ test("the public scientific reference includes accessible equations without deve
   assert.match(prose, /99.5th percentile/);
   assert.match(prose, /uniform 7 × 7/);
   assert.match(prose, /data range L = 1/);
+});
+
+test("the shared header contains only the unchanged home logo and secure GitHub link", () => {
+  const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
+  const header = html.match(/<header class="masthead">([\s\S]*?)<\/header>/)[1];
+  assert.equal((header.match(/<a\b/g) || []).length, 2);
+  assert.match(header, /class="brand" href="#\/overview" aria-label="MRBench overview"/);
+  assert.match(
+    header,
+    /<span class="brand-mark" aria-hidden="true">M<\/span><span>MRBench<\/span>/,
+  );
+  const github = header.match(/<a\b[^>]*class="github-link"[\s\S]*?<\/a\s*>/)[0];
+  assert.match(github, /href="https:\/\/github.com\/lab-midas\/MRBench"/);
+  assert.match(github, /target="_blank"/);
+  assert.match(github, /rel="noopener noreferrer"/);
+  assert.match(github, />GitHub ↗<\/a\s*>/);
+  assert.doesNotMatch(header, /<nav\b|data-page=|>Overview<|>Protocol</);
+});
+
+test("Protocol presentation retains canonical scientific definitions and the existing metrics route", () => {
+  // Captured from the scientific definitions before the navigation-only refinement.
+  assert.equal(
+    createHash("sha256").update(JSON.stringify(PROTOCOL)).digest("hex"),
+    "5daf435a63a70b62fa0a41f347aae78423f3ed9dd4f2487c5ed0a77be21fd7a6",
+  );
+  const source = readFileSync(new URL("./protocol.mjs", import.meta.url), "utf8");
+  assert.match(source, /"Evaluation Metrics & Protocol"/);
+  assert.match(source, /section\("Quantitative Metrics", "metric-definitions", metrics\)/);
+  assert.match(
+    source,
+    /section\("Statistical Aggregation", "statistical-aggregation", aggregation\)/,
+  );
+  assert.match(source, /section\("Evaluation Protocol", "evaluation-protocol", context\)/);
+  assert.deepEqual(parseRoute("#/protocol"), { page: "protocol" });
+  assert.deepEqual(parseRoute("#/protocol?section=metrics"), {
+    page: "protocol",
+    section: "metrics",
+  });
 });

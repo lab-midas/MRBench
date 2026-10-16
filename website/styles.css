@@ -7,6 +7,80 @@
   --paper: #f7f9fa;
   --white: #fff;
 }
+/* The approved figure remains a single, unmodified image. Only links are overlaid. */
+.framework-section {
+  margin-bottom: 38px;
+}
+.framework-figure {
+  margin: 0;
+}
+.framework-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.framework-canvas {
+  position: relative;
+  min-width: 900px;
+}
+.framework-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.framework-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.framework-hotspot {
+  position: absolute;
+  pointer-events: auto;
+  border-radius: 7px;
+}
+.framework-hotspot:hover {
+  outline: 2px solid rgba(68, 109, 157, 0.55);
+  outline-offset: -2px;
+}
+.framework-hotspot:focus-visible {
+  outline: 3px solid #b78c38;
+  outline-offset: -3px;
+}
+.framework-figure figcaption {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.framework-mobile-note {
+  display: none;
+}
+.dimension-heading th,
+#metric-definitions {
+  scroll-margin-top: 24px;
+}
+.resource-details {
+  max-width: 850px;
+}
+.resource-attribution {
+  font-size: 13px;
+}
+.resource-context {
+  padding-left: 18px;
+  border-left: 2px solid var(--line);
+  margin: 24px 0;
+}
+.resource-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+@media (max-width: 600px) {
+  .framework-canvas {
+    min-width: 1000px;
+  }
+  .framework-mobile-note {
+    display: inline;
+  }
+}
 * {
   box-sizing: border-box;
 }
@@ -102,26 +176,18 @@ p {
   border-radius: 9px;
   font-size: 23px;
 }
-.masthead nav {
-  display: flex;
-  gap: 24px;
+.github-link {
   margin-left: auto;
-  height: 100%;
+  display: inline-flex;
   align-items: center;
-}
-.masthead nav a {
+  min-height: 44px;
   color: var(--muted);
   text-decoration: none;
   font-size: 14px;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  border-bottom: 2px solid transparent;
 }
-.masthead nav a.active {
+.github-link:hover {
   color: var(--ink);
-  border-bottom-color: var(--teal);
-  font-weight: 650;
+  text-decoration: underline;
 }
 main {
   max-width: 1250px;
@@ -505,6 +571,11 @@ select {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
 }
+.protocol-section + .protocol-section {
+  border-top: 1px solid var(--line);
+  margin-top: 32px;
+  padding-top: 30px;
+}
 .metric-card {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -524,7 +595,7 @@ select {
   flex-wrap: wrap;
   margin-bottom: 16px;
 }
-.metric-heading h2 {
+.metric-heading h3 {
   font-size: 20px;
   margin: 0;
 }
@@ -563,20 +634,17 @@ select {
   max-width: 100%;
 }
 .protocol-aggregation {
-  padding: 30px 0;
-  margin: 32px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  margin: 0;
 }
-.protocol-aggregation h2 {
-  font-size: 23px;
+.protocol-aggregation h3 {
+  font-size: 20px;
 }
 .protocol-aggregation > .equation {
   display: inline-flex;
   margin: 14px 36px 8px 0;
   vertical-align: middle;
 }
-.protocol-grid h2 {
+.protocol-grid h3 {
   font-size: 20px;
   letter-spacing: -0.2px;
   margin-bottom: 14px;
@@ -716,10 +784,7 @@ select {
     font-size: 20px;
     border-radius: 7px;
   }
-  .masthead nav {
-    gap: 18px;
-  }
-  .masthead nav a {
+  .github-link {
     font-size: 12px;
   }
   main {
@@ -808,7 +873,7 @@ select {
   .metric-card {
     padding: 20px;
   }
-  .metric-heading h2 {
+  .metric-heading h3 {
     font-size: 19px;
   }
   .protocol-aggregation > .equation {
@@ -869,7 +934,7 @@ select {
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
   }
-  .protocol-grid h2 {
+  .protocol-grid h3 {
     font-size: 19px;
   }
 }

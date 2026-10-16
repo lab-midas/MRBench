@@ -5,11 +5,15 @@ import {
   validateRegistry,
   hasResults,
   resolveExperimentView,
+  routeAnchorId,
 } from "./registry.mjs";
 import { validateRows } from "./stats.mjs";
 import { mountQuantitative, QUANTITATIVE_MODULES } from "./experiments/quantitative.mjs";
 import { mountMedia, validateMedia } from "./media.mjs";
 import { renderProtocol } from "./protocol.mjs";
+import { mountFramework } from "./framework.mjs";
+import { FRAMEWORK, validateFramework } from "./framework-registry.mjs";
+import { validateResources, renderResource } from "./resources.mjs";
 
 const main = document.getElementById("application");
 const tooltip = document.getElementById("tooltip");
@@ -20,6 +24,8 @@ document.querySelector(".skip-link").addEventListener("click", (event) => {
 });
 const cache = new Map();
 let registry;
+let resources;
+let renderedPage;
 let request = 0;
 
 function pageHeading(title, description, dimension) {
@@ -40,6 +46,7 @@ function renderOverview() {
   );
   welcome.append(message);
   main.append(welcome);
+  mountFramework(main);
   const section = el("section", null, { "aria-labelledby": "experiments-heading" });
   section.append(el("h2", "Explore the experiments", { id: "experiments-heading" }));
   const table = el("table", null, { class: "experiment-table" });
@@ -55,7 +62,14 @@ function renderOverview() {
   for (const dimension of registry.dimensions) {
     const body = el("tbody", null, { class: `dimension dimension-${dimension.tone}` });
     const groupRow = el("tr", null, { class: "dimension-heading" });
-    groupRow.append(el("th", dimension.name, { colspan: "3", scope: "rowgroup" }));
+    groupRow.append(
+      el("th", dimension.name, {
+        colspan: "3",
+        scope: "rowgroup",
+        id: `category-${dimension.id}`,
+        tabindex: "-1",
+      }),
+    );
     body.append(groupRow);
     for (const entry of registry.experiments.filter((e) => e.dimension === dimension.id)) {
       const row = el("tr", null, { "data-experiment": entry.id });
@@ -208,7 +222,10 @@ async function renderExperiment(route, token) {
 }
 function renderNotFound() {
   main.append(
-    pageHeading("Experiment not found", "This link does not identify a registered experiment."),
+    pageHeading(
+      "Page not found",
+      "This link does not identify a registered page or experiment category.",
+    ),
     el("a", "← All experiments", { href: "#/overview", class: "back-link" }),
   );
 }
@@ -224,30 +241,44 @@ function report(error, root = main) {
 async function navigate({ focus = true } = {}) {
   const token = ++request;
   tooltip.hidden = true;
-  main.replaceChildren();
-  delete main.dataset.experimentView;
-  const route = parseRoute(location.hash);
-  for (const link of document.querySelectorAll(".masthead nav a")) {
-    const active = link.dataset.page === route.page;
-    link.classList.toggle("active", active);
-    if (active) link.setAttribute("aria-current", "page");
-    else link.removeAttribute("aria-current");
+  let route = parseRoute(location.hash);
+  if (route.category && !registry.dimensions.some((d) => d.id === route.category))
+    route = { page: "not-found" };
+  // Keep the figure and matrix in place when only the selected category changes.
+  const keepOverview = renderedPage === "overview" && route.page === "overview";
+  if (!keepOverview) {
+    main.replaceChildren();
+    delete main.dataset.experimentView;
+    window.scrollTo(0, 0);
   }
-  window.scrollTo(0, 0);
-  if (route.page === "overview") renderOverview();
-  else if (route.page === "protocol") renderProtocol(main, pageHeading);
-  else if (route.page === "experiment") await renderExperiment(route, token);
+  if (route.page === "overview") {
+    if (!keepOverview) renderOverview();
+  } else if (route.page === "protocol") {
+    renderProtocol(main, pageHeading);
+  } else if (["dataset", "model"].includes(route.page)) {
+    if (!renderResource(main, resources, route, pageHeading)) renderNotFound();
+  } else if (route.page === "experiment") await renderExperiment(route, token);
   else renderNotFound();
   if (token !== request) return;
+  renderedPage = route.page;
   const h1 = main.querySelector("h1");
   document.title =
     route.page === "overview"
       ? "MRBench: Benchmarking Foundation Models for MRI Reconstruction"
       : `${h1?.textContent}${route.page === "experiment" ? ` — ${main.dataset.experimentView === "results" ? "Results" : "Experiment details"}` : ""} · MRBench`;
-  if (focus) h1?.focus({ preventScroll: true });
+  const anchor = document.getElementById(routeAnchorId(route));
+  if (focus) (anchor || h1)?.focus({ preventScroll: true });
+  if (anchor) anchor.scrollIntoView({ behavior: focus ? "smooth" : "auto", block: "start" });
+  else if (keepOverview) window.scrollTo({ top: 0, behavior: focus ? "smooth" : "auto" });
 }
 try {
-  registry = validateRegistry(await fetchJSON("data/experiments.json"));
+  const [experimentsJSON, resourcesJSON] = await Promise.all([
+    fetchJSON("data/experiments.json"),
+    fetchJSON("data/resources.json"),
+  ]);
+  registry = validateRegistry(experimentsJSON);
+  resources = validateResources(resourcesJSON);
+  validateFramework(FRAMEWORK, resources, registry);
   for (const experiment of registry.experiments) {
     for (const module of experiment.quantitative)
       if (!QUANTITATIVE_MODULES[module.type])
@@ -257,6 +288,25 @@ try {
   }
   await navigate({ focus: false });
   window.addEventListener("hashchange", () => navigate().catch((error) => report(error)));
+  main.addEventListener("click", (event) => {
+    const link = event.target.closest("a.framework-hotspot");
+    if (
+      !link ||
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    const destination = parseRoute(link.hash);
+    // A repeated click has no hashchange event, but must still scroll to its category.
+    if (destination.page === "overview" && destination.category && link.hash === location.hash) {
+      event.preventDefault();
+      navigate().catch((error) => report(error));
+    }
+  });
   window.addEventListener(
     "scroll",
     () => {

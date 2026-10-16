@@ -1,6 +1,12 @@
 # Maintaining the experiment dashboard
 
-The MRBench website is static HTML, CSS and browser JavaScript. Public branding does not rename the CMRBench repository, existing directories, metric identifiers or deployment path. Its experiment registry drives the Overview and detail pages, so the navigation does not need to be edited whenever an evaluation is added. The current data and `stats.mjs` are a frozen scientific baseline; changing the layout does not require changing either.
+The MRBench website is static HTML, CSS and browser JavaScript. The public project is [lab-midas/MRBench](https://github.com/lab-midas/MRBench), served under `/MRBench/`; historical local directory names and metric identifiers are retained. Its experiment registry drives the Overview and detail pages, so the navigation does not need to be edited whenever an evaluation is added. The current data and `stats.mjs` are a frozen scientific baseline; changing the layout does not require changing either.
+
+## Framework and resource pages
+
+The original approved PNG is displayed without alteration. `framework-registry.mjs` owns its dimensions, SHA256 and image-relative rectangles; `framework.mjs` renders the image with transparent, keyboard-accessible links. Only ten regions are enabled. The three category targets use dimension IDs, independently of experiment counts. Category and Protocol anchors use query parameters inside the existing hash router, so refresh and browser history remain compatible with GitHub Pages.
+
+Edit dataset/model descriptions and verified sources in `data/resources.json`; `resources.mjs` supplies a shared detail template. Add future resource IDs there without adding new route handlers. Adding a resource does not automatically add a hotspot: any additional interaction needs a deliberate scope change to the central mapping. Do not re-export or edit the approved figure to update metadata. See [framework-overview.md](framework-overview.md) for coordinates, source verification and current page content.
 
 ## Add an experiment
 
@@ -81,6 +87,6 @@ The renderer provides a condition selector when several conditions exist and lay
 
 Run `node --test website/stats.test.mjs`. The original five statistical tests remain intact and import the architecture and frozen-data checks. File hashes protect the current CSV, JSON and audit; an aggregate snapshot checks every existing group for NRMSE, PSNR, SSIM and actual R. Update a frozen-data expectation only as part of a deliberate, separately audited scientific-data release.
 
-Serve `website/` over HTTP and review Overview, both quantitative pages, Protocol, and a planned experiment. Check filters, keyboard tooltips, matching subject highlights, direct filter URLs and browser Back. At small widths, only the plots scroll horizontally; the page should not overflow. Check relative links under the GitHub Pages `/CMRBench/` prefix. The current workflow deploys `website/` unchanged and needs no router fallback.
+Serve `website/` over HTTP and review Overview, both quantitative pages, Protocol, and a planned experiment. Check filters, keyboard tooltips, matching subject highlights, direct filter URLs and browser Back. At small widths, the plots and the original landscape framework scroll inside their own regions; the page should not overflow. Check all ten hotspots, the six resource views, category refresh/history and relative links under the GitHub Pages `/MRBench/` prefix. The current workflow deploys `website/` unchanged and needs no router fallback.
 
 Use the PowerShell synchronization recipe in the root README only after local review. It excludes `.git` and `_qa/`; it does not commit, push or delete files from the destination clone. The independent publishing repository is never an automatic build output.

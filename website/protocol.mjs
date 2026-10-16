@@ -89,13 +89,27 @@ function equation({ math, parts, label }) {
 }
 function article(title, paragraphs, className = "") {
   const node = el("article", null, { class: className });
-  node.append(el("h2", title), ...paragraphs.map((text) => el("p", text)));
+  node.append(el("h3", title), ...paragraphs.map((text) => el("p", text)));
+  return node;
+}
+function section(title, id, content) {
+  const node = el("section", null, {
+    class: "protocol-section",
+    id,
+    tabindex: "-1",
+    "aria-labelledby": `${id}-heading`,
+  });
+  node.append(el("h2", title, { id: `${id}-heading` }), content);
   return node;
 }
 
 export function renderProtocol(root, pageHeading) {
   root.append(
-    pageHeading("Evaluation protocol", "How reconstruction quality is measured and compared."),
+    el("a", "← Back to overview", { href: "#/overview", class: "back-link" }),
+    pageHeading(
+      "Evaluation Metrics & Protocol",
+      "Learn how reconstruction quality is quantified and how evaluation results are compared across models and experimental conditions.",
+    ),
   );
   const metrics = el("div", null, { class: "protocol-metrics" });
   for (const metric of PROTOCOL) {
@@ -104,7 +118,7 @@ export function renderProtocol(root, pageHeading) {
       id: `protocol-${metric.id}`,
     });
     const heading = el("div", null, { class: "metric-heading" });
-    heading.append(el("h2", metric.title));
+    heading.append(el("h3", metric.title));
     if (metric.direction)
       heading.append(el("span", metric.direction, { class: "metric-direction" }));
     card.append(heading, el("p", metric.paragraphs[0]));
@@ -113,7 +127,7 @@ export function renderProtocol(root, pageHeading) {
     card.append(equations, ...metric.paragraphs.slice(1).map((text) => el("p", text)));
     metrics.append(card);
   }
-  root.append(metrics);
+  root.append(section("Quantitative Metrics", "metric-definitions", metrics));
   const aggregation = article(
     "From frames to subjects to a cohort",
     [
@@ -138,7 +152,7 @@ export function renderProtocol(root, pageHeading) {
       math: "<mi>s</mi><mo>=</mo><msqrt><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msup><mrow><mo>(</mo><msub><mi>m</mi><mi>i</mi></msub><mo>−</mo><mi>μ</mi><mo>)</mo></mrow><mn>2</mn></msup></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></mfrac></msqrt>",
     }),
   );
-  root.append(aggregation);
+  root.append(section("Statistical Aggregation", "statistical-aggregation", aggregation));
   const context = el("div", null, { class: "protocol-grid" });
   context.append(
     article("Nominal and actual acceleration", [
@@ -158,5 +172,5 @@ export function renderProtocol(root, pageHeading) {
       "An exact zero frame MSE gives infinite PSNR. The published cohort table admits only finite, passed endpoints and verified matching masks; failures and missing results require separate coverage reporting.",
     ]),
   );
-  root.append(context);
+  root.append(section("Evaluation Protocol", "evaluation-protocol", context));
 }

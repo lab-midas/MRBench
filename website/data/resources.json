@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "datasets": [
+    {
+      "id": "inhouse-cine",
+      "name": "In-house cine",
+      "description": "The current in-house cardiac cine dataset used in MRBench's published acceleration and sampling experiments. Benchmark measurements are constructed from prepared complex reference images and sensitivity maps.",
+      "context": "Only anonymized quantitative endpoints are published for this cohort. Source data and private participant information are not distributed through the dashboard.",
+      "links": []
+    },
+    {
+      "id": "cmrxrecon",
+      "name": "CMRxRecon",
+      "description": "CMRxRecon provides public cardiac MRI k-space datasets and reconstruction challenges for the research community.",
+      "context": "CMRxRecon is a planned dataset extension in MRBench. The results currently published here use the in-house cine cohort; no CMRxRecon cohort results are included.",
+      "links": [
+        { "label": "Official CMRxRecon project", "url": "https://github.com/CmrxRecon" },
+        { "label": "Dataset publication", "url": "https://doi.org/10.1038/s41597-024-03525-4" }
+      ]
+    },
+    {
+      "id": "additional-data",
+      "name": "Additional data / fastMRI",
+      "description": "MRBench is designed to extend to additional MRI datasets, including fastMRI, an external MRI dataset and research initiative.",
+      "context": "The framework includes an input-preparation path for selected static multi-coil brain and knee data. This does not establish validation for every fastMRI format or model combination. No fastMRI cohort results are published in this dashboard.",
+      "links": [
+        { "label": "Official fastMRI dataset", "url": "https://fastmri.med.nyu.edu/" },
+        { "label": "Official fastMRI code", "url": "https://github.com/facebookresearch/fastMRI" }
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "ram",
+      "name": "RAM",
+      "full_name": "Reconstruct Anything Model",
+      "description": "A lightweight, non-iterative reconstruction model that incorporates acquisition physics to address a range of imaging inverse problems, including MRI.",
+      "attribution": "Original work by Matthieu Terris, Samuel Hurault, Maxime Song and Julian Tachella.",
+      "context": "The published MRBench cohort uses the DeepInv implementation of RAM. Its MRI adapter receives multi-coil measurements, a physical mask and complex sensitivity maps.",
+      "paper_title": "Reconstruct Anything Model: a lightweight general model for computational imaging",
+      "links": [
+        { "label": "Original paper", "url": "https://arxiv.org/abs/2503.08915" },
+        { "label": "Original code", "url": "https://github.com/matthieutrs/ram" }
+      ]
+    },
+    {
+      "id": "sdum",
+      "name": "SDUM",
+      "full_name": "Scalable Deep Unrolled Model",
+      "description": "An MRI reconstruction framework combining cascaded unrolled reconstruction, learned coil sensitivity estimation and acquisition-aware data consistency and conditioning.",
+      "attribution": "Original work by Puyang Wang, Pengfei Guo, Keyi Chai, Jinyuan Zhou, Daguang Xu and Shanshan Jiang.",
+      "context": "The published MRBench cohort evaluates SDUM Base. The adapter preserves the released temporal-window inference and internal sensitivity-map estimation. The official implementation is distributed as NV-Raw2Insights-MRI.",
+      "paper_title": "SDUM: A Scalable Deep Unrolled Model for Universal MRI Reconstruction",
+      "links": [
+        { "label": "Original paper", "url": "https://arxiv.org/abs/2512.17137" },
+        { "label": "Original code", "url": "https://github.com/NVIDIA-Medtech/NV-Raw2insights-MRI" }
+      ]
+    },
+    {
+      "id": "cardiomm",
+      "name": "CardioMM",
+      "full_name": "Cardiovascular MRI reconstruction foundation model",
+      "description": "A generalist model for accelerated cardiovascular MRI reconstruction that combines semantic acquisition context with physics-informed data consistency.",
+      "attribution": "Original work by Zi Wang and colleagues.",
+      "context": "MRBench uses a pinned official source implementation with framewise inference, internal sensitivity-map estimation and acquisition-metadata conditioning.",
+      "paper_title": "Enabling Ultra-Fast Cardiovascular Imaging Across Heterogeneous Clinical Environments with A Generalist Foundation Model and Multimodal Database",
+      "links": [
+        { "label": "Original paper", "url": "https://arxiv.org/abs/2512.21652" },
+        { "label": "Original code", "url": "https://github.com/wangziblake/CardioMM_MMCMR-427K" }
+      ]
+    }
+  ]
+}

@@ -1,11 +1,25 @@
-# MRBench dashboard source
+# Dashboard development
 
-This static website presents MRI reconstruction robustness experiments. It requires no frontend build step or third-party charting library. Scientific metrics are computed before export; the browser summarizes the unchanged subject endpoints.
+Static source for the [MRBench project](../README.md), with no frontend build step.
 
-Overview groups experiments into three evaluation dimensions. Experiment names and Details links explain the design. View results opens a separate Results view for Acceleration factor or Sampling pattern. The local Details/Results selector preserves filters. Planned experiments have no Results link or placeholder plots.
+## Local preview
 
-The Protocol page renders normalization, NRMSE, PSNR and SSIM equations directly, alongside aggregation and comparison principles. Model colors remain SDUM blue, CardioMM orange and RAM teal. No qualitative images are listed in this release.
+From the repository root:
 
-From the dashboard repository root, run `python -m http.server 8765 --bind 127.0.0.1 --directory website` and open `http://127.0.0.1:8765/`. Run `node --test website/stats.test.mjs` before release. The existing workflow deploys website/ under the unchanged /CMRBench/ project path.
+```text
+python -m http.server 8895 --bind 127.0.0.1 --directory website
+```
 
-See the root README and docs/dashboard-maintenance.md for file responsibilities and extension points. Internal source verification is documented in docs/protocol-verification.md.
+Open [the local dashboard](http://127.0.0.1:8895/). Keep the server running while reviewing; use Ctrl+C to stop it.
+
+## Validation
+
+With Node.js 22 or later, run from the repository root:
+
+```text
+node --test website/stats.test.mjs
+```
+
+The existing Pages workflow validates and publishes `website/` under `/MRBench/`.
+
+See the [evaluation protocol](docs/evaluation_protocol.md), [scientific source verification](docs/protocol-verification.md) and [maintenance guide](docs/dashboard-maintenance.md) for methods and extension instructions.

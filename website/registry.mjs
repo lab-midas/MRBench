@@ -7,13 +7,44 @@ export function experimentURL(id, view = "details", filters = new URLSearchParam
     if (key !== "view") params.set(key, value);
   return `#/experiments/${encodeURIComponent(id)}?${params}`;
 }
+export function overviewURL(category) {
+  return `#/overview${category ? `?${new URLSearchParams({ category })}` : ""}`;
+}
+export function resourceURL(type, id) {
+  if (!["dataset", "model"].includes(type)) throw new Error("Unknown resource type");
+  return `#/${type}s/${encodeURIComponent(id)}`;
+}
+export function protocolURL(section) {
+  return `#/protocol${section ? `?${new URLSearchParams({ section })}` : ""}`;
+}
+export function routeAnchorId(route) {
+  if (route.page === "overview" && route.category) return `category-${route.category}`;
+  if (route.page === "protocol" && route.section === "metrics") return "metric-definitions";
+  return null;
+}
 export function parseRoute(hash) {
   const [path, query = ""] = hash.replace(/^#/, "").split("?");
-  if (["", "/", "/overview", "overview"].includes(path)) return { page: "overview" };
-  if (["/protocol", "protocol"].includes(path)) return { page: "protocol" };
+  const params = new URLSearchParams(query);
+  if (["", "/", "/overview", "overview"].includes(path)) {
+    const category = params.get("category");
+    return category
+      ? /^[a-z0-9-]+$/.test(category)
+        ? { page: "overview", category }
+        : { page: "not-found" }
+      : { page: "overview" };
+  }
+  if (["/protocol", "protocol"].includes(path)) {
+    const section = params.get("section");
+    return section
+      ? section === "metrics"
+        ? { page: "protocol", section }
+        : { page: "not-found" }
+      : { page: "protocol" };
+  }
+  const resource = /^\/(datasets|models)\/([a-z0-9-]+)$/.exec(path);
+  if (resource) return { page: resource[1] === "datasets" ? "dataset" : "model", id: resource[2] };
   const match = /^\/experiments\/([a-z0-9-]+)$/.exec(path);
   if (match) {
-    const params = new URLSearchParams(query);
     const view = params.get("view") || "details";
     if (!["details", "results"].includes(view)) return { page: "not-found" };
     return { page: "experiment", id: match[1], view, params };

@@ -6,6 +6,7 @@ import { MODEL_COLORS, modelLabel } from "./models.mjs";
 import { initialSelection, selectCondition, patterns } from "./experiments/conditions.mjs";
 import { hasPublishedMedia, validateMedia } from "./media.mjs";
 import "./refinement.test.mjs";
+import "./framework.test.mjs";
 const registry = JSON.parse(readFileSync(new URL("./data/experiments.json", import.meta.url)));
 const rows = JSON.parse(readFileSync(new URL("./data/main_metrics.json", import.meta.url)));
 
