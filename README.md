@@ -1,15 +1,55 @@
 # MRBench: Benchmarking Foundation Models for MRI Reconstruction
 
-MRBench is a benchmark for evaluating foundation models for MRI reconstruction 
-across acquisition conditions, signal fidelities, and imaging domains. 
+MRBench is a benchmark for evaluating foundation models for MRI reconstruction
+across acquisition conditions, signal fidelities, and imaging domains.
 It supports systematic comparisons of reconstruction quality.
 
-This public release contains the interactive dashboard. 
-The complete Python benchmarking framework is being prepared for public release.
+This repository provides the MRBench Python reconstruction framework and
+interactive dashboard.
 
 ## Framework Overview
 
 ![MRBench framework overview](website/assets/framework/Fig_1_Workflow.png)
+
+## Python Framework
+
+Install MRBench Core with Python 3.10 or newer, from the repository root:
+
+```bash
+python -m venv .venv
+# Activate .venv using your shell, then:
+python -m pip install -e .
+```
+
+Run a small synthetic reconstruction and evaluation without pretrained weights:
+
+```bash
+python examples/make_toy_data.py
+python -m cmrbench.reconstruct --config examples/toy_reconstruction.yaml
+python -m cmrbench.evaluate --reconstruction-dir outputs/toy_reconstruction
+```
+
+For your own data, configure an experiment and the model runtime paths using
+[getting started](docs/getting_started.md) and [model setup](docs/models.md), then run:
+
+```bash
+python -m cmrbench.run_experiment --config /path/to/experiment.yaml
+```
+
+Core dispatches reconstruction to the configured RAM, SDUM or CardioMM Python
+interpreter and evaluation to the configured Core interpreter. Each model keeps
+its own environment and preprocessing.
+
+The RAM, SDUM and CardioMM **adapters are included**. Upstream model code and
+pretrained weights are separate assets subject to their providers' terms.
+CardioMM's author-provided checkpoint is confidential and is not distributed;
+its adapter requires a separately authorized local checkpoint. CardioMM sampling
+calls [externally installed upstream code](docs/models.md#cardiomm-sampling);
+no adapted CardioMM sampling algorithms are bundled.
+
+First-party licensing will be determined in November. Retain the
+[third-party notices](THIRD_PARTY_NOTICES.md), including the
+[VISTA research/nonprofit restrictions](cmrbench/vista/NOTICE.md).
 
 ## Interactive Dashboard
 
@@ -22,6 +62,14 @@ acceleration factor and sampling pattern; additional experiment results are plan
 ## Repository Structure
 
 ```text
+cmrbench/               Python framework and model adapters
+configs/models/         Model configuration templates
+examples/               Synthetic example and experiment templates
+tests/                  Core tests
+docs/                   Data, model setup and scientific protocols
+licenses/               Third-party license text
+pyproject.toml          Python installation metadata
+THIRD_PARTY_NOTICES.md  Component attribution and terms
 website/                Interactive dashboard source
   assets/               Original framework figure and website assets
   data/                 Published metrics, audit and resource metadata

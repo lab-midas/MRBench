@@ -1,0 +1,59 @@
+name: sdum
+adapter_version: "1.4"
+inference_mode: direct_released_pretrained_inference
+
+parameters:
+  variant: small
+  sdum_source_root: /path/to/cmrbench-assets/external/NV-Raw2insights-MRI
+  checkpoint: /path/to/cmrbench-assets/checkpoints/sdum/nv_raw2insights_mri_small.pt
+  config: /path/to/cmrbench-assets/external/NV-Raw2insights-MRI/configs/nv_raw2insights_mri_small.json
+  device: cuda
+  acquisition: Cine
+  sampling_condition:
+    mode: auto
+
+released_variants:
+  small:
+    model_variant: nv_raw2insights_mri_small
+    config_name: nv_raw2insights_mri_small.json
+    cascades: 6
+    checkpoint_sha256: 8ba66defef7c66738c1eac25f2ea6a5d164fb9e547c36d90b469d8d5287ed624
+    checkpoint_role: engineering / adapter parity smoke
+    label_conditioning: false
+    acceleration_categories: [8, 16, 24]
+    mask_families: [uniform, kt_gaussian, kt_radial]
+    acquisitions: [Cine]
+  base:
+    model_variant: nv_raw2insights_mri_base
+    config_name: nv_raw2insights_mri_base.json
+    cascades: 18
+    checkpoint: null  # Explicit server path must be confirmed by the user.
+    checkpoint_sha256: 667189bac5f159e52b2f1640b504b4efd549717c37720c2397e749d16ec056b8
+    checkpoint_role: primary released scientific model
+    label_conditioning: true
+    acceleration_categories: [8, 16, 24]
+    mask_families: [uniform, kt_gaussian, kt_radial]
+    acquisitions: [BlackBlood, Cine, Flow2d, LGE, Mapping, Perfusion, T1rho, T1w, T2w]
+  large:
+    model_variant: nv_raw2insights_mri_large
+    config_name: nv_raw2insights_mri_large.json
+    cascades: 34
+    checkpoint: null  # Manual server availability/download and SHA validation required.
+    checkpoint_sha256: 0a1d06d74dcd3dbd0c3692edc203527370a796fbb6f61be4c58bdcbcb817c54b
+    checkpoint_role: released model under validation
+    label_conditioning: true
+    acceleration_categories: [8, 16, 24]
+    mask_families: [uniform, kt_gaussian, kt_radial]
+    acquisitions: [BlackBlood, Cine, Flow2d, LGE, Mapping, Perfusion, T1rho, T1w, T2w]
+
+frozen_phase2b_protocol:
+  positive_control_scope: official Small ktRadial16 positive control only
+  temporal_window: 5
+  cyclic_temporal_indices: true
+  forward_batch_size: 1
+  released_monai_ifft_private: true
+  common_cmrbench_fft_used: false
+  normalization_torch_threads: 1
+  external_smaps_used: false
+  output_representation: real_rss_magnitude
+  challenge_stage_n_applied: false

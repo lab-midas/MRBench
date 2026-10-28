@@ -1,0 +1,40 @@
+# Run commands from the repository root; ordinary relative data/output paths
+# are resolved against the current working directory.
+experiment:
+  name: toy_zero_filled
+  seed: 1
+dataset:
+  name: inhouse_cine
+  manifest: outputs/toy_data/manifest.csv
+  split: development
+  preprocess_root: outputs/toy_data
+  selection:
+    subject: ToyCine
+    slices: all
+  parameters:
+    sensitivity_map_coils: 4
+sampling:
+  mode: retrospective
+  method: uniform
+  implementation: canonical
+  acceleration: 4
+  seed: 1
+  parameters:
+    ncalib: 8
+model:
+  name: zero_filled
+output:
+  root: outputs/toy_reconstruction
+  save_reconstruction: true
+  save_metadata: true
+  save_qc: false
+evaluation:
+  enabled: true
+  metric_protocol: cmrbench_recon_metrics_v2_subject_p995
+  qc:
+    enabled: true
+    policy: mid_slice_fixed_phases_v1
+    phase_indices: [6, 22]
+  gif:
+    enabled: true
+    mid_slice_reconstruction: true

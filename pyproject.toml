@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cmr-fm-bench"
+version = "0.1.0"
+description = "Extensible cardiac MRI reconstruction benchmark interfaces"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "PyYAML>=6.0",
+    "matplotlib>=3.7",
+    "scikit-image>=0.21",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+analysis = ["pandas>=2.0"]
+docs = ["Markdown>=3.6"]
+fastmri = [
+    "h5py>=3.8",
+    "sigpy==0.1.27",
+]
+
+[tool.setuptools]
+# Component notices only; the first-party license remains undecided.
+license-files = ["licenses/Apache-2.0.txt", "THIRD_PARTY_NOTICES.md", "cmrbench/vista/NOTICE.md"]
+
+[tool.setuptools.package-data]
+"cmrbench.vista" = ["NOTICE.md"]
+
+[tool.setuptools.packages.find]
+include = ["cmrbench*"]

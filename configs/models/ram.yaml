@@ -1,0 +1,28 @@
+name: ram
+adapter_version: "2.0"
+inference_mode: direct_pretrained_inference
+requires_sensitivity_maps: true
+
+parameters:
+  implementation: official_github
+  ram_source_root: /path/to/cmrbench-assets/external/ram
+  checkpoint: null
+  device: cuda
+
+frozen_scientific_protocol:
+  physical_gaussian_sigma: 0.0
+  added_synthetic_noise: false
+  external_intensity_normalization: null
+  measurement_rescaling: null
+  sensitivity_map_normalization: null
+  temporal_modeling: false
+  independent_inference_batch_size: 1
+
+implementation_provenance:
+  model: RAM
+  implementation: official_github
+  source_repository: https://github.com/matthieutrs/ram
+  source_commit: 0de1617403291e5a28179097795752200e65b82c
+  deepinv_version: 0.3.0
+  checkpoint_sha256: 1292571adc3d15f9db5e7f5bd92265599030b6b816637367d0f5992d8dbdef7a
+  model_state_sha256: c6fbc876f752e861a2b5aa68abc83bd6d2832e5d01ced248f97ed41e5d6b0e18
