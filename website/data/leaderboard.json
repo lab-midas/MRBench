@@ -1,0 +1,802 @@
+{
+  "schema_version": 1,
+  "aggregation": "Finite passed observations averaged within each patient, then equal-weight mean across patients.",
+  "metrics": [
+    {
+      "id": "SSIM",
+      "direction": "higher",
+      "decimals": 4
+    },
+    {
+      "id": "PSNR",
+      "direction": "higher",
+      "decimals": 2,
+      "unit": "dB"
+    },
+    {
+      "id": "NRMSE",
+      "direction": "lower",
+      "decimals": 4
+    }
+  ],
+  "datasets": [
+    {
+      "id": "inhouse-cine-sax",
+      "label": "In-house cardiac cine (SAX)",
+      "patient_count": 65,
+      "metric_protocol": "cmrbench_recon_metrics_v2_subject_p995",
+      "sampling_implementation": "cardiomm",
+      "ncalib": "20",
+      "seed": "1",
+      "models": [
+        {
+          "id": "CardioMM",
+          "variant": "official_pinned_source"
+        },
+        {
+          "id": "RAM",
+          "variant": "deepinv"
+        },
+        {
+          "id": "SDUM",
+          "variant": "base"
+        }
+      ],
+      "patterns": [
+        {
+          "id": "kt_uniform",
+          "label": "kt-uniform"
+        },
+        {
+          "id": "kt_gaussian",
+          "label": "kt-Gaussian"
+        },
+        {
+          "id": "kt_radial",
+          "label": "kt-radial"
+        }
+      ],
+      "source_sha256": "ecaaca4b3d05d83b90fdf659ad94c8069b22131e65d666b6819f93a1b845bb69"
+    }
+  ],
+  "conditions": [
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_uniform",
+      "acceleration": 8.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8740083810970439,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 31.505304026247224,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.11668631482166895,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8218538436533861,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 28.474831921059273,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.16448004679596137,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.9320998570356916,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 33.78017229978847,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.09237636094683474,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_uniform",
+      "acceleration": 16.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8328411247111784,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 29.69757293522338,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.14305784654451234,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.7858097428798713,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 26.784856896983012,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.2002323228277493,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8660427886961313,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 29.628682874529353,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.14826116047749002,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_uniform",
+      "acceleration": 24.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8184060818885369,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 28.986496022714068,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.1552238383521828,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.7755896329365344,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 26.299626984122074,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.2121511096403168,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8480932988663373,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 28.790973612534547,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.16292956740913284,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_gaussian",
+      "acceleration": 8.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8794374020077332,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 31.94183362515366,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.11081978862704267,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8410143083373663,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 29.272890291817195,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.1501629861745721,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.9545566559818361,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 37.060042213167975,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.062248306905934025,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_gaussian",
+      "acceleration": 16.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8435006245179612,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 30.043332421849296,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.13757969410213697,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8015822060822675,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 27.394096383040615,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.18674617529016102,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.9236579512305035,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 33.62943957676529,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.09248848374278017,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_gaussian",
+      "acceleration": 24.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8261816633865638,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 29.154266808182378,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.15250690091550184,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.78551278189757,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 26.683874804301993,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.20297684240921224,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.896762247350784,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 31.607755012269592,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.11708953597342509,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_radial",
+      "acceleration": 8.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.9245327483227334,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 34.85600573286337,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.07895800743658847,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8997947571388961,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 33.27515635530099,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.09425194234272613,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.9753921439211403,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 40.7240441379209,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.04161362144954315,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_radial",
+      "acceleration": 16.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8867799891239276,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 31.93061939582237,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.11003118824696588,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8346205741317523,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 29.59273245702427,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.14404395840543505,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.9631804823318207,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 38.590330224865916,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.051896238795367235,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    },
+    {
+      "dataset": "inhouse-cine-sax",
+      "sampling": "kt_radial",
+      "acceleration": 24.0,
+      "models": [
+        {
+          "model": "CardioMM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.8492389809369602,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 30.163287035453816,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.13463826832275472,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "RAM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.789568100769477,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 27.805828837733554,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.17712872333735002,
+              "n_patients": 65
+            }
+          }
+        },
+        {
+          "model": "SDUM",
+          "patients_observed": 65,
+          "excluded_observations": 0,
+          "metrics": {
+            "SSIM": {
+              "mean": 0.9496875215644087,
+              "n_patients": 65
+            },
+            "PSNR": {
+              "mean": 36.800623481426626,
+              "n_patients": 65
+            },
+            "NRMSE": {
+              "mean": 0.06370063432420192,
+              "n_patients": 65
+            }
+          }
+        }
+      ],
+      "coverage": {
+        "SSIM": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "PSNR": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        },
+        "NRMSE": {
+          "same_patients": true,
+          "common_patients": 65,
+          "union_patients": 65
+        }
+      },
+      "measurement_match": "verified"
+    }
+  ]
+}
