@@ -3,12 +3,12 @@
   "dimensions": [
     {
       "id": "acquisition",
-      "name": "Acquisition & Measurement Robustness",
+      "name": "Acquisition Condition",
       "tone": "blue"
     },
     {
       "id": "representation",
-      "name": "Signal Representation & Encoding Robustness",
+      "name": "Signal Fidelity",
       "tone": "yellow"
     },
     {

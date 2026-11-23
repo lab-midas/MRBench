@@ -23,6 +23,7 @@ document.querySelector(".skip-link").addEventListener("click", (event) => {
   main.scrollIntoView();
 });
 const cache = new Map();
+const OVERVIEW_TITLE = "MRBench: Benchmarking Foundation Models for MRI Reconstruction";
 let registry;
 let resources;
 let renderedPage;
@@ -35,8 +36,12 @@ function pageHeading(title, description, dimension) {
   if (description) header.append(el("p", description, { class: "intro" }));
   return header;
 }
+function sectionDivider() {
+  return el("hr", null, { class: "section-divider" });
+}
 function renderOverview() {
-  const welcome = pageHeading("MRBench: Benchmarking Foundation Models for MRI Reconstruction");
+  const welcome = pageHeading(OVERVIEW_TITLE);
+  welcome.classList.add("overview-heading");
   const message = el("p", null, { class: "intro welcome" });
   message.append(
     el("strong", "Welcome to MRBench!"),
@@ -45,8 +50,9 @@ function renderOverview() {
     ),
   );
   welcome.append(message);
-  main.append(welcome);
+  main.append(welcome, sectionDivider());
   mountFramework(main);
+  main.append(sectionDivider());
   const section = el("section", null, { "aria-labelledby": "experiments-heading" });
   section.append(el("h2", "Explore the experiments", { id: "experiments-heading" }));
   const table = el("table", null, { class: "experiment-table" });
@@ -264,7 +270,7 @@ async function navigate({ focus = true } = {}) {
   const h1 = main.querySelector("h1");
   document.title =
     route.page === "overview"
-      ? "MRBench: Benchmarking Foundation Models for MRI Reconstruction"
+      ? OVERVIEW_TITLE
       : `${h1?.textContent}${route.page === "experiment" ? ` — ${main.dataset.experimentView === "results" ? "Results" : "Experiment details"}` : ""} · MRBench`;
   const anchor = document.getElementById(routeAnchorId(route));
   if (focus) (anchor || h1)?.focus({ preventScroll: true });

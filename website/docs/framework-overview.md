@@ -4,12 +4,12 @@ The approved framework is shown above the original experiment matrix. It is one 
 
 ## Figure provenance
 
-The authoritative source is `E:/PhD/ISMRM_27/Figures/Fig_1_Workflow.png`. It was copied without re-encoding to `assets/framework/Fig_1_Workflow.png`.
+The authoritative source is `E:/PhD/paper-CMRBench/Figures/Framework.png`. The supplied updated figure was copied without re-encoding to the existing `assets/framework/Fig_1_Workflow.png` asset, also used by the root README.
 
 - Native dimensions: **3681 × 1263**.
-- SHA256, source and distributed copy: `67abe10f2b2b6fd6731f99c790b34e2c30fa37ce7b4e6f9216a9b25f7da9d48a`.
-- `E:/PhD/paper-CMRBench/framework.pptx` was inspected as a ZIP/XML package for slide text and shape geometry. It was not edited, rendered into a replacement figure or distributed with the website.
-- PPT and PNG text differ in places. The PNG is authoritative: its **CMRBench**, **Acquisition robustness** and **Signal robustness** labels remain exactly as supplied. The dashboard's surrounding MRBench branding is unchanged.
+- SHA256, source and distributed copy: `7af7b00a266ac54cbfb97ded1c01c217454fcbe45993e86f2a5261ee9854cfd2`.
+- The current supplied PNG contains **MRBench**, **Acquisition condition** and **Signal fidelity**. All pixels are preserved as supplied; no raster editing or PPT export is performed.
+- The original PPT was inspected when establishing the overlay. This replacement has the same dimensions and matching card geometry, so the ten native-coordinate rectangles and route targets are retained.
 
 The image scales proportionally on desktop and laptop screens. Below its minimum useful display width, only the figure's container scrolls horizontally. It is never cropped, stretched or reorganized into a new layout. A short mobile instruction explains the horizontal scroll.
 

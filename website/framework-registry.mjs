@@ -7,7 +7,7 @@ export const FRAMEWORK = Object.freeze({
     src: "assets/framework/Fig_1_Workflow.png",
     width: 3681,
     height: 1263,
-    sha256: "67abe10f2b2b6fd6731f99c790b34e2c30fa37ce7b4e6f9216a9b25f7da9d48a",
+    sha256: "7af7b00a266ac54cbfb97ded1c01c217454fcbe45993e86f2a5261ee9854cfd2",
     alt: "The original approved framework figure: data sources, controlled experiment designs, standardized model benchmarking and reconstruction evaluation.",
   },
   hotspots: [
@@ -34,7 +34,7 @@ export const FRAMEWORK = Object.freeze({
     },
     {
       id: "category-acquisition",
-      label: "Acquisition conditions: acquisition and measurement experiments",
+      label: "Acquisition Condition: experiment category",
       rect: [662, 354, 800, 299],
       target: { type: "category", id: "acquisition" },
       enabled: true,

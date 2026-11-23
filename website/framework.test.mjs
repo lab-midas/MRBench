@@ -14,7 +14,7 @@ test("framework retains the approved PNG bytes, dimensions and exactly ten scope
   const png = readFileSync(new URL(FRAMEWORK.image.src, import.meta.url));
   assert.equal(
     createHash("sha256").update(png).digest("hex"),
-    "67abe10f2b2b6fd6731f99c790b34e2c30fa37ce7b4e6f9216a9b25f7da9d48a",
+    "7af7b00a266ac54cbfb97ded1c01c217454fcbe45993e86f2a5261ee9854cfd2",
   );
   assert.equal(FRAMEWORK.image.sha256, createHash("sha256").update(png).digest("hex"));
   assert.deepEqual(

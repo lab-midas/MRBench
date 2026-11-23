@@ -52,9 +52,12 @@ test("switching views preserves the selected acquisition and metric in the URL",
 });
 test("public entry branding changes without changing the Pages path or protocol identifiers", () => {
   const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
-  assert.match(
-    html,
-    /<title>MRBench: Benchmarking Foundation Models for MRI Reconstruction<\/title>/,
+  assert.equal(
+    html
+      .match(/<title>([\s\S]*?)<\/title>/)[1]
+      .replace(/\s+/g, " ")
+      .trim(),
+    "MRBench: Benchmarking Foundation Models for MRI Reconstruction",
   );
   assert.match(html, /aria-label="MRBench overview"/);
   assert.doesNotMatch(html, /CMRBench|<footer/);

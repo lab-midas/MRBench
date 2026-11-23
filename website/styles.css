@@ -7,9 +7,14 @@
   --paper: #f7f9fa;
   --white: #fff;
 }
+.section-divider {
+  margin: 0 0 28px;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
 /* The approved figure remains a single, unmodified image. Only links are overlaid. */
 .framework-section {
-  margin-bottom: 38px;
+  margin-bottom: 24px;
 }
 .framework-figure {
   margin: 0;
@@ -198,6 +203,14 @@ main {
 .page-heading {
   padding: 48px 0 32px;
 }
+.overview-heading h1 {
+  max-width: none;
+  font-size: 36px;
+  line-height: 1.25;
+  letter-spacing: -0.6px;
+  text-align: left;
+  text-align-last: start;
+}
 .page-heading .intro {
   font-size: 18px;
   line-height: 1.7;
@@ -206,6 +219,15 @@ main {
 }
 .page-heading h1:last-child {
   margin-bottom: 0;
+}
+.page-heading .welcome {
+  max-width: none;
+  padding: 20px 24px;
+  border: 1px solid #e0e8ef;
+  border-radius: 14px;
+  background: #eef3f7;
+  text-align: justify;
+  text-align-last: start;
 }
 .welcome strong {
   color: var(--ink);
@@ -800,8 +822,15 @@ select {
   .page-heading {
     padding: 34px 0 26px;
   }
+  .overview-heading h1 {
+    font-size: 26px;
+  }
   .page-heading .intro {
     font-size: 15px;
+  }
+  .page-heading .welcome {
+    padding: 16px 18px;
+    font-size: 16px;
   }
   .eyebrow {
     font-size: 10px;
