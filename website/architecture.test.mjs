@@ -7,6 +7,7 @@ import { initialSelection, selectCondition, patterns } from "./experiments/condi
 import { hasPublishedMedia, validateMedia } from "./media.mjs";
 import "./refinement.test.mjs";
 import "./framework.test.mjs";
+import "./leaderboard.test.mjs";
 const registry = JSON.parse(readFileSync(new URL("./data/experiments.json", import.meta.url)));
 const rows = JSON.parse(readFileSync(new URL("./data/main_metrics.json", import.meta.url)));
 

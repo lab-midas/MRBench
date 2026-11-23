@@ -12,6 +12,7 @@ import { mountQuantitative, QUANTITATIVE_MODULES } from "./experiments/quantitat
 import { mountMedia, validateMedia } from "./media.mjs";
 import { renderProtocol } from "./protocol.mjs";
 import { mountFramework } from "./framework.mjs";
+import { mountLeaderboard } from "./leaderboard.mjs";
 import { FRAMEWORK, validateFramework } from "./framework-registry.mjs";
 import { validateResources, renderResource } from "./resources.mjs";
 
@@ -39,7 +40,7 @@ function pageHeading(title, description, dimension) {
 function sectionDivider() {
   return el("hr", null, { class: "section-divider" });
 }
-function renderOverview() {
+async function renderOverview() {
   const welcome = pageHeading(OVERVIEW_TITLE);
   welcome.classList.add("overview-heading");
   const message = el("p", null, { class: "intro welcome" });
@@ -53,6 +54,7 @@ function renderOverview() {
   main.append(welcome, sectionDivider());
   mountFramework(main);
   main.append(sectionDivider());
+  const leaderboardReady = mountLeaderboard(main);
   const section = el("section", null, { "aria-labelledby": "experiments-heading" });
   section.append(el("h2", "Explore the experiments", { id: "experiments-heading" }));
   const table = el("table", null, { class: "experiment-table" });
@@ -111,6 +113,7 @@ function renderOverview() {
   }
   section.append(table);
   main.append(section);
+  await leaderboardReady;
 }
 function renderSetup(root, experiment) {
   const setup = el("section", null, { class: "setup", "aria-labelledby": "setup-heading" });
@@ -258,7 +261,7 @@ async function navigate({ focus = true } = {}) {
     window.scrollTo(0, 0);
   }
   if (route.page === "overview") {
-    if (!keepOverview) renderOverview();
+    if (!keepOverview) await renderOverview();
   } else if (route.page === "protocol") {
     renderProtocol(main, pageHeading);
   } else if (["dataset", "model"].includes(route.page)) {
