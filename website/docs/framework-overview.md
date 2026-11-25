@@ -93,24 +93,19 @@ The following is a review snapshot of `data/resources.json`, the maintained sour
 
 ### Dataset: In-house cine
 
-The current in-house cardiac cine dataset used in MRBench's published acceleration and sampling experiments. Benchmark measurements are constructed from prepared complex reference images and sensitivity maps.
+The detail page is titled **In-house cardiac cine MRI (short-axis)**; its stable route and the overview's In-house cine label are unchanged. It presents the supplied animated example, acquisition parameters, input-preparation notes and ethics statement from `data/resources.json`.
 
-Only anonymized quantitative endpoints are published for this cohort. Source data and private participant information are not distributed through the dashboard.
-
+The raw MRI data are internal and are not publicly available. The example GIF retains its original display timing; 40 ms refers to acquisition temporal resolution. The 24 calibration lines for sensitivity-map estimation are separate from experimental undersampling ACS settings.
 
 ### Dataset: CMRxRecon
 
-CMRxRecon provides public cardiac MRI k-space datasets and reconstruction challenges for the research community.
-
-CMRxRecon is a planned dataset extension in MRBench. The results currently published here use the in-house cine cohort; no CMRxRecon cohort results are included.
+CMRxRecon is a public cardiac MRI dataset. The page retains its official project and dataset publication links.
 
 [Official CMRxRecon project](https://github.com/CmrxRecon) · [Dataset publication](https://doi.org/10.1038/s41597-024-03525-4)
 
 ### Dataset: Additional data / fastMRI
 
-MRBench is designed to extend to additional MRI datasets, including fastMRI, an external MRI dataset and research initiative.
-
-The framework includes an input-preparation path for selected static multi-coil brain and knee data. This does not establish validation for every fastMRI format or model combination. No fastMRI cohort results are published in this dashboard.
+The page has two sections: **User-provided data**, with k-space, mask, reference and sensitivity-map shapes and an explicit Requirements column; and **Other public datasets**, introducing fastMRI brain and knee data. Reference images for magnitude-based evaluation may be complex-valued or magnitude images; the fastMRI reader uses a real-valued RSS reference, while the prepared in-house reader uses complex images to construct coil data. The dimension note explains `T=1` for static MRI. A bullet list links to sampling Details and to the MRBench GitHub homepage (replace the latter URL when the data-preparation guide is published). The original fastMRI dataset and code links are unchanged. Content is maintained in the entry's `sections` metadata; inline emphasis and code notation are rendered as safe DOM elements.
 
 [Official fastMRI dataset](https://fastmri.med.nyu.edu/) · [Official fastMRI code](https://github.com/facebookresearch/fastMRI)
 

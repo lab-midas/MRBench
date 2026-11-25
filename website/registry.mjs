@@ -84,6 +84,14 @@ export function validateRegistry(registry) {
     if (!dimensions.has(entry.dimension)) throw new Error(`Unknown dimension: ${entry.dimension}`);
     if (!entry.name || !entry.description || !Array.isArray(entry.setup))
       throw new Error(`Incomplete experiment: ${entry.id}`);
+    if (entry.setup_format !== undefined && !["list", "table"].includes(entry.setup_format))
+      throw new Error(`Invalid setup format: ${entry.id}`);
+    if (
+      entry.notes !== undefined &&
+      (!Array.isArray(entry.notes) ||
+        entry.notes.some((note) => typeof note !== "string" || !note.trim()))
+    )
+      throw new Error(`Invalid experiment notes: ${entry.id}`);
     for (const field of ["quantitative", "qualitative", "illustrations", "sources"])
       if (!Array.isArray(entry[field])) throw new Error(`Missing ${field}: ${entry.id}`);
     for (const source of entry.sources)

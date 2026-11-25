@@ -89,7 +89,7 @@ test("new shareable hash routes keep the MRBench Pages prefix and stable anchors
   );
 });
 
-test("resource registry has three minimal datasets and independently attributed model sources", () => {
+test("resource registry preserves dataset IDs and independently attributed model sources", () => {
   validateResources(resources);
   assert.deepEqual(
     resources.datasets.map((e) => e.id),
@@ -111,8 +111,71 @@ test("resource registry has three minimal datasets and independently attributed 
     );
     assert.match(model.attribution, /Original work by/);
   }
-  assert.match(resources.datasets[1].context, /planned dataset extension/);
-  assert.match(resources.datasets[2].context, /No fastMRI cohort results/);
+  assert.equal(resources.datasets[1].description, "CMRxRecon is a public cardiac MRI dataset.");
+  assert.equal(resources.datasets[1].context, undefined);
+  assert.deepEqual(resources.datasets[1].links, [
+    { label: "Official CMRxRecon project", url: "https://github.com/CmrxRecon" },
+    { label: "Dataset publication", url: "https://doi.org/10.1038/s41597-024-03525-4" },
+  ]);
+  const additional = resources.datasets[2];
+  assert.deepEqual(
+    additional.sections.map((section) => section.title),
+    ["User-provided data", "Other public datasets"],
+  );
+  assert.match(additional.sections[0].facts[0].text, /\[S, T, Kx, Ky, C\]/);
+  assert.equal(additional.sections[0].facts[0].label, "K-space data");
+  assert.doesNotMatch(additional.sections[0].facts[0].text, /required/i);
+  assert.match(additional.sections[0].facts[1].text, /Binary mask: `\[S, T, Kx, Ky\]`/);
+  assert.match(
+    additional.sections[0].facts[2].text,
+    /Complex-valued or magnitude image: `\[S, T, X, Y\]`/,
+  );
+  assert.match(additional.sections[0].note, /T = 1/);
+  assert.deepEqual(
+    additional.sections[0].facts.map((fact) => fact.status),
+    ["Required", "Conditional", "Optional", "Model-dependent"],
+  );
+  assert.deepEqual(
+    additional.sections[0].references.map((link) => link.url),
+    ["#/experiments/sampling?view=details", "https://github.com/lab-midas/MRBench"],
+  );
+  assert.equal(
+    additional.sections[1].description,
+    "MRBench also supports public MRI datasets such as fastMRI, including brain and knee imaging data.",
+  );
+  assert.equal(additional.sections[1].note, undefined);
+  assert.deepEqual(additional.links, [
+    { label: "Official fastMRI dataset", url: "https://fastmri.med.nyu.edu/" },
+    { label: "Official fastMRI code", url: "https://github.com/facebookresearch/fastMRI" },
+  ]);
+});
+
+test("in-house details retain the overview identity and the supplied animated cine and parameters", () => {
+  const entry = resources.datasets.find((item) => item.id === "inhouse-cine");
+  assert.equal(entry.name, "In-house cine");
+  assert.equal(entry.page_title, "In-house cardiac cine MRI (short-axis)");
+  assert.match(entry.context, /internal.*not publicly available/);
+  assert.equal(entry.description, undefined);
+  assert.equal(entry.details.preview.caption, "Example short-axis cine.");
+  for (const item of entry.details.preparation.slice(0, 2)) {
+    assert.equal(item.link.url, "https://users.ece.utexas.edu/~jtamir/files/papers/2486.pdf");
+  }
+  const gif = readFileSync(new URL(entry.details.preview.src, import.meta.url));
+  assert.match(gif.toString("ascii", 0, 6), /^GIF8[79]a$/);
+  assert.deepEqual([gif.readUInt16LE(6), gif.readUInt16LE(8)], [640, 480]);
+  assert.equal(
+    createHash("sha256").update(gif).digest("hex"),
+    "862433ffc15a5cb6d01c303b3e96a97c59af12ce945a644ef88f150e9d8fa2bc",
+  );
+  const facts = Object.fromEntries(entry.details.facts.map((row) => [row.label, row.text]));
+  assert.equal(facts.Acquisition, undefined);
+  assert.equal(facts["TE / TR"], "1.06 / 2.12 ms");
+  assert.equal(facts["Temporal resolution"], "40 ms");
+  assert.equal(facts["Cardiac phases"], "25 per cine series");
+  assert.equal(entry.details.facts.filter((row) => row.label === "Slice thickness").length, 1);
+  const invalid = structuredClone(resources);
+  invalid.datasets[0].details.preview.src = "private/source.gif";
+  assert.throws(() => validateResources(invalid), /Invalid dataset preview/);
 });
 
 test("registries reject unknown targets, invalid geometry and missing source attribution", () => {

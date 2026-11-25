@@ -118,13 +118,36 @@ async function renderOverview() {
 function renderSetup(root, experiment) {
   const setup = el("section", null, { class: "setup", "aria-labelledby": "setup-heading" });
   setup.append(el("h2", "Experiment setup", { id: "setup-heading" }));
-  const descriptions = el("dl", null, { class: "setup-list" });
+  const isTable = experiment.setup_format === "table";
+  const descriptions = el(isTable ? "table" : "dl", null, {
+    class: isTable ? "setup-table" : "setup-list",
+  });
+  let body = descriptions;
+  if (isTable) {
+    descriptions.append(el("caption", "Experiment setup parameters", { class: "sr-only" }));
+    const head = el("thead");
+    const row = el("tr");
+    row.append(...["Parameter", "Description"].map((label) => el("th", label, { scope: "col" })));
+    head.append(row);
+    body = el("tbody");
+    descriptions.append(head, body);
+  }
   for (const item of experiment.setup) {
-    const group = el("div");
-    group.append(el("dt", item.label), el("dd", item.text));
-    descriptions.append(group);
+    const group = el(isTable ? "tr" : "div");
+    group.append(
+      el(isTable ? "th" : "dt", item.label, isTable ? { scope: "row" } : {}),
+      el(isTable ? "td" : "dd", item.text),
+    );
+    body.append(group);
   }
   setup.append(descriptions);
+  if (experiment.notes?.length) {
+    const notes = el("div", null, { class: "setup-notes" });
+    const list = el("ul");
+    list.append(...experiment.notes.map((note) => el("li", note)));
+    notes.append(el("h3", "Notes"), list);
+    setup.append(notes);
+  }
   root.append(setup);
 }
 async function metrics(sourceId) {
@@ -253,6 +276,7 @@ async function navigate({ focus = true } = {}) {
   let route = parseRoute(location.hash);
   if (route.category && !registry.dimensions.some((d) => d.id === route.category))
     route = { page: "not-found" };
+  main.classList.toggle("subpage", route.page !== "overview");
   // Keep the figure and matrix in place when only the selected category changes.
   const keepOverview = renderedPage === "overview" && route.page === "overview";
   if (!keepOverview) {

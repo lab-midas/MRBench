@@ -15,6 +15,19 @@ test("registry separates two published views from seven planned evaluations", ()
   validateRegistry(registry);
   assert.equal(registry.dimensions.length, 3);
   assert.equal(registry.experiments.length, 9);
+  const acceleration = registry.experiments.find((entry) => entry.id === "acceleration");
+  assert.equal(
+    acceleration.objective,
+    "Evaluate model robustness to increasing acceleration factors.",
+  );
+  assert.equal(acceleration.setup_format, "table");
+  assert.deepEqual(
+    acceleration.setup.map((row) => row.label),
+    ["Acceleration factors", "Sampling patterns", "Evaluation dataset"],
+  );
+  assert.equal(acceleration.notes.length, 2);
+  assert.match(acceleration.notes[0], /nominal acceleration.*R_net.*receive the nominal R/);
+  assert.match(acceleration.notes[1], /ACS width of 20/);
   assert.deepEqual(
     registry.experiments.filter((e) => e.status === "published").map((e) => e.id),
     ["acceleration", "sampling"],

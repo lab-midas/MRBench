@@ -34,15 +34,24 @@
       "dimension": "acquisition",
       "status": "published",
       "description": "How does reconstruction quality change as retrospective undersampling becomes more severe?",
+      "setup_format": "table",
       "setup": [
         {
-          "label": "Input change",
-          "text": "Retrospectively undersample the same constructed multi-coil k-space at nominal R = 8, 16 and 24, keeping subjects matched across models."
+          "label": "Acceleration factors",
+          "text": "MRBench supports user-defined acceleration factors. The current evaluation uses nominal R = 8, 16, and 24."
         },
         {
-          "label": "Published conditions",
-          "text": "k-t uniform, k-t Gaussian and k-t pseudo-radial masks from the CardioMM implementation; ACS width 20; seed 1. Actual R is measured from each complete realized mask, including ACS."
+          "label": "Sampling patterns",
+          "text": "k-t uniform, k-t Gaussian, and k-t radial."
+        },
+        {
+          "label": "Evaluation dataset",
+          "text": "In-house cardiac cine (short-axis), 65 patients."
         }
+      ],
+      "notes": [
+        "The specified R is the nominal acceleration factor. The actual acceleration (R_net) may be lower when fully-sampled ACS data are included. Models requiring acceleration information receive the nominal R.",
+        "The published experiments used an ACS width of 20."
       ],
       "quantitative": [
         {
@@ -53,7 +62,7 @@
       "qualitative": [],
       "illustrations": [],
       "sources": ["main-v1"],
-      "objective": "Measure how reconstruction quality changes as fewer k-space samples are acquired, testing robustness to increasing undersampling severity."
+      "objective": "Evaluate model robustness to increasing acceleration factors."
     },
     {
       "id": "sampling",
