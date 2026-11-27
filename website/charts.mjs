@@ -1,6 +1,6 @@
 import { describe } from "./stats.mjs";
 import { modelColor, modelLabel, modelNames } from "./models.mjs";
-import { patternNames, patternLabel, patterns } from "./experiments/conditions.mjs";
+import { patternKey, resultPatternLabel, patterns } from "./experiments/conditions.mjs";
 export function createCharts(state, renderResults) {
   const $ = (id) => document.getElementById(id);
   const fmt = (x, m = "NRMSE") => Number(x).toFixed(m === "PSNR" ? 2 : 4);
@@ -51,8 +51,8 @@ export function createCharts(state, renderResults) {
     return y;
   }
 
-  function showTip(node, text) {
-    node.setAttribute("aria-label", text);
+  function showTip(node, text, accessibleLabel = text) {
+    node.setAttribute("aria-label", accessibleLabel);
     const tip = $("tooltip");
     const open = (x, y) => {
       tip.textContent = text;
@@ -90,8 +90,7 @@ export function createCharts(state, renderResults) {
       }
     });
   }
-  function summaryTip(model, rows, metric, condition) {
-    const stats = describe(rows.map((r) => r[metric]));
+  function summaryTip(model, rows, metric, condition, stats) {
     const actual = describe(rows.map((r) => r.actual_R));
     return (
       label(model) +
@@ -191,36 +190,56 @@ export function createCharts(state, renderResults) {
           tabindex: 0,
         });
         dot.dataset.subject = row.subject;
-        showTip(
-          dot,
-          `${row.subject} · ${label(model)} · ${metric} ${fmt(row[metric], metric)} · nominal R${row.requested_R}, actual R ${row.actual_R.toFixed(2)} · ${row.sampling_implementation} · mask ${row.binary_mask_sha256.slice(0, 12)}…`,
-        );
+        const value = fmt(row[metric], metric);
+        const details = `${row.subject} · ${label(model)} · ${metric} ${value} · nominal R${row.requested_R}, actual R ${row.actual_R.toFixed(2)} · ${row.sampling_implementation} · mask ${row.binary_mask_sha256.slice(0, 12)}…`;
+        showTip(dot, value, details);
       }
       add(
         svg,
         "text",
         { x: center, y: 280, "text-anchor": "middle", fill: "#203149", "font-size": 11 },
-        label(model),
-      );
-      add(
-        svg,
-        "text",
-        { x: center, y: 298, "text-anchor": "middle", fill: "#798698", "font-size": 10 },
-        `n = ${group.length}`,
+        model === "RAM" ? "RAM" : label(model),
       );
     });
   }
 
   function trend() {
-    const rows = samplingRows(),
-      metric = state.metric;
+    const rows = samplingRows();
     const rs = [...new Set(rows.map((r) => r.requested_R))].sort((a, b) => a - b);
+    comparisonLineChart({
+      container: "trend",
+      labelText: `${state.metric} mean and subject SD across nominal accelerations`,
+      axisTitle: "Nominal acceleration",
+      ticks: rs.map((r) => ({ position: r, label: `R = ${r}` })),
+      selected: Number($("acceleration").value),
+      rows,
+      positionOf: (row) => row.requested_R,
+    });
+  }
+
+  function samplingComparison() {
+    const r = Number($("acceleration").value);
+    const rows = state.rows.filter((row) => row.requested_R === r);
+    const choices = patterns(rows);
+    comparisonLineChart({
+      container: "sampling-comparison",
+      labelText: `${state.metric} mean and subject SD across sampling patterns at nominal R${r}`,
+      axisTitle: "Sampling pattern",
+      ticks: choices.map((choice, position) => ({ position, label: resultPatternLabel(choice) })),
+      selected: choices.indexOf($("sampling").value),
+      rows,
+      positionOf: (row) => choices.indexOf(patternKey(row)),
+    });
+  }
+
+  function comparisonLineChart({ container, labelText, axisTitle, ticks, selected, rows, positionOf }) {
+    const metric = state.metric;
     const groupSummaries = [];
     models().forEach((model, i) => {
-      const points = rs
-        .map((r) => ({
-          r,
-          rows: rows.filter((row) => row.model === model && row.requested_R === r),
+      const points = ticks
+        .map((tick) => ({
+          ...tick,
+          rows: rows.filter((row) => row.model === model && positionOf(row) === tick.position),
         }))
         .filter((p) => p.rows.length)
         .map((p) => ({ ...p, summary: describe(p.rows.map((row) => row[metric])) }));
@@ -231,13 +250,12 @@ export function createCharts(state, renderResults) {
         g.points.flatMap((p) => [p.summary.mean - p.summary.sd, p.summary.mean + p.summary.sd]),
       ),
     );
-    const svg = svgChart($("trend"), `${metric} mean and subject SD across nominal accelerations`),
-      y = axis(svg, domain, metric);
-    const x = scale(range(rs, 0.1), 66, 495);
-    const selectedR = Number($("acceleration").value);
+    const svg = svgChart($(container), labelText);
+    const y = axis(svg, domain, metric);
+    const x = scale(range(ticks.map((tick) => tick.position), 0.1), 66, 495);
     add(svg, "line", {
-      x1: x(selectedR),
-      x2: x(selectedR),
+      x1: x(selected),
+      x2: x(selected),
       y1: 20,
       y2: 255,
       stroke: "#bdcad5",
@@ -247,14 +265,14 @@ export function createCharts(state, renderResults) {
       const shade = color(group.model, group.i);
       add(svg, "polyline", {
         points: group.points
-          .map((p) => `${x(p.r) + (group.i - 1) * 4} ${y(p.summary.mean)}`)
+          .map((p) => `${x(p.position) + (group.i - 1) * 4} ${y(p.summary.mean)}`)
           .join(" "),
         stroke: shade,
         "stroke-width": 2,
         fill: "none",
       });
       for (const p of group.points) {
-        const px = x(p.r) + (group.i - 1) * 4;
+        const px = x(p.position) + (group.i - 1) * 4;
         add(svg, "line", {
           x1: px,
           x2: px,
@@ -280,102 +298,26 @@ export function createCharts(state, renderResults) {
           "data-model": group.model,
           tabindex: 0,
         });
-        showTip(dot, summaryTip(group.model, p.rows, metric, `nominal R${p.r}`));
+        showTip(
+          dot,
+          `${fmt(p.summary.mean, metric)} ± ${fmt(p.summary.sd, metric)}`,
+          summaryTip(group.model, p.rows, metric, p.label, p.summary),
+        );
       }
     }
-    for (const r of rs)
+    for (const tick of ticks)
       add(
         svg,
         "text",
-        { x: x(r), y: 279, "text-anchor": "middle", fill: "#65758a", "font-size": 11 },
-        `R = ${r}`,
+        { x: x(tick.position), y: 279, "text-anchor": "middle", fill: "#65758a", "font-size": 11 },
+        tick.label,
       );
     add(
       svg,
       "text",
-      { x: 280, y: 303, "text-anchor": "middle", fill: "#798698", "font-size": 10 },
-      "Nominal acceleration (actual R is reported separately)",
+      { x: 280, y: 303, "text-anchor": "middle", fill: "#798698", "font-size": 11 },
+      axisTitle,
     );
-  }
-
-  function samplingComparison() {
-    const metric = state.metric,
-      r = Number($("acceleration").value);
-    const rows = state.rows.filter((row) => row.requested_R === r);
-    const choices = patterns(rows);
-    const series = models().map((model, i) => ({
-      model,
-      i,
-      points: choices
-        .map((choice) => ({
-          choice,
-          group: rows.filter(
-            (row) =>
-              row.model === model && `${row.sampling}|${row.sampling_implementation}` === choice,
-          ),
-        }))
-        .filter((point) => point.group.length)
-        .map((point) => ({ ...point, summary: describe(point.group.map((row) => row[metric])) })),
-    }));
-    const domain = range(
-      series.flatMap((s) =>
-        s.points.flatMap((p) => [p.summary.mean - p.summary.sd, p.summary.mean + p.summary.sd]),
-      ),
-    );
-    const svg = svgChart(
-      $("sampling-comparison"),
-      `${metric} across physical sampling families at nominal R${r}`,
-    );
-    const y = axis(svg, domain, metric);
-    const xs = choices.map((_, i) => 106 + i * (370 / Math.max(1, choices.length - 1)));
-    for (const s of series) {
-      const shade = color(s.model, s.i);
-      for (const p of s.points) {
-        const px = xs[choices.indexOf(p.choice)] + (s.i - (series.length - 1) / 2) * 16;
-        add(svg, "line", {
-          x1: px,
-          x2: px,
-          y1: y(p.summary.mean - p.summary.sd),
-          y2: y(p.summary.mean + p.summary.sd),
-          stroke: shade,
-          "stroke-opacity": 0.6,
-        });
-        for (const value of [p.summary.mean - p.summary.sd, p.summary.mean + p.summary.sd])
-          add(svg, "line", { x1: px - 4, x2: px + 4, y1: y(value), y2: y(value), stroke: shade });
-        const dot = add(svg, "circle", {
-          cx: px,
-          cy: y(p.summary.mean),
-          r: 4,
-          fill: shade,
-          "data-model": s.model,
-          tabindex: 0,
-        });
-        showTip(
-          dot,
-          summaryTip(s.model, p.group, metric, `${patternLabel(p.choice)} · nominal R${r}`),
-        );
-      }
-    }
-    choices.forEach((choice, i) => {
-      const group = rows.filter(
-        (row) => `${row.sampling}|${row.sampling_implementation}` === choice,
-      );
-      const actual = describe([
-        ...new Map(group.map((row) => [row.subject, row.actual_R])).values(),
-      ]);
-      add(
-        svg,
-        "text",
-        { x: xs[i], y: 280, "text-anchor": "middle", fill: "#203149", "font-size": 11 },
-        patternNames[choice.split("|")[0]] || choice.split("|")[0],
-      );
-      add(
-        svg,
-        "text",
-        { x: xs[i], y: 298, "text-anchor": "middle", fill: "#798698", "font-size": 10 },
-        `actual R median ${actual.median.toFixed(2)}`,
-      );
-    });
   }
 
   return { distribution, trend, samplingComparison };

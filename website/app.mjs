@@ -224,6 +224,14 @@ async function renderExperiment(route, token) {
       main.append(el("p", "Results coming soon.", { class: "unavailable", role: "status" }));
     return;
   }
+  const qualitative = document.createDocumentFragment();
+  const updateQualitative = mountMedia(
+    qualitative,
+    experiment.qualitative,
+    "Qualitative results",
+    "qualitative",
+    { showEmpty: experiment.quantitative.length > 0 },
+  );
   for (const module of experiment.quantitative) {
     const loading = el("p", "Loading quantitative results…", { class: "loading", role: "status" });
     main.append(loading);
@@ -237,6 +245,7 @@ async function renderExperiment(route, token) {
         rows,
         params: route.params,
         onSelection(selection) {
+          updateQualitative?.(selection);
           const params = new URLSearchParams(selection);
           history.replaceState(null, "", experimentURL(experiment.id, "results", params));
           for (const link of selector.querySelectorAll("a[data-view]"))
@@ -250,7 +259,7 @@ async function renderExperiment(route, token) {
     }
   }
   if (token !== request) return;
-  mountMedia(main, experiment.qualitative, "Qualitative results", "qualitative");
+  main.append(qualitative);
 }
 function renderNotFound() {
   main.append(

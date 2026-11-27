@@ -1,8 +1,8 @@
 export const sampling = Object.freeze({
   title: "Across sampling patterns",
   container: "sampling-comparison",
-  caption:
-    "Grouped means ± sample SD at the selected nominal R. Patterns are categorical; actual R can differ between patterns.",
+  defaultAcceleration: 16,
+  caption: "Mean ± SD for each sampling pattern at the selected nominal acceleration.",
   draw(charts) {
     charts.samplingComparison();
   },

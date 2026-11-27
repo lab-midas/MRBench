@@ -9,10 +9,18 @@ export const patternNames = Object.freeze({
   radial: "Pseudo-radial",
 });
 export const METRICS = Object.freeze(["NRMSE", "PSNR", "SSIM"]);
+const resultPatternNames = Object.freeze({
+  kt_uniform: "kt-uniform",
+  kt_gaussian: "kt-Gaussian",
+  kt_radial: "kt-radial (pseudo)",
+});
 export const patternKey = (row) => `${row.sampling}|${row.sampling_implementation}`;
 export function patternLabel(key) {
   const [name, implementation] = key.split("|");
   return `${patternNames[name] || name} · ${implementation}`;
+}
+export function resultPatternLabel(key) {
+  return resultPatternNames[key.split("|")[0]] ?? patternLabel(key);
 }
 export function patterns(rows) {
   const order = ["kt_uniform", "kt_gaussian", "kt_radial"];
@@ -32,13 +40,14 @@ export function accelerations(rows, sampling) {
 export function selectCondition(rows, sampling, acceleration) {
   return rows.filter((r) => patternKey(r) === sampling && r.requested_R === Number(acceleration));
 }
-export function initialSelection(rows, params = new URLSearchParams()) {
+export function initialSelection(rows, params = new URLSearchParams(), defaultAcceleration) {
   const choices = patterns(rows);
   const sampling = choices.includes(params.get("sampling")) ? params.get("sampling") : choices[0];
   const rs = accelerations(rows, sampling);
+  const requestedR = Number(params.get("R") ?? defaultAcceleration);
   return {
     sampling,
-    acceleration: rs.includes(Number(params.get("R"))) ? Number(params.get("R")) : rs[0],
+    acceleration: rs.includes(requestedR) ? requestedR : rs[0],
     metric: METRICS.includes(params.get("metric")) ? params.get("metric") : "NRMSE",
   };
 }

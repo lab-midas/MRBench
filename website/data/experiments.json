@@ -23,6 +23,7 @@
       "csv_path": "data/main_metrics.csv",
       "audit_path": "data/main_audit.json",
       "metric_protocol": "cmrbench_recon_metrics_v2_subject_p995",
+      "dataset": { "id": "inhouse-cine-sax", "label": "In-house cardiac cine (SAX)" },
       "cohort": "In-house cardiac cine · constructed multi-coil k-space",
       "context": "CardioMM-source physical masks; each subject and condition uses the same realized mask across models. Model-specific normalization, map estimation and conditioning are retained."
     }
@@ -59,7 +60,121 @@
           "source": "main-v1"
         }
       ],
-      "qualitative": [],
+      "qualitative": [
+        {
+          "id": "cine-comparison",
+          "title": "Cardiac cine comparison",
+          "followFilters": true,
+          "playback": { "width": 156, "height": 192, "frames": 25, "frameMs": 120 },
+          "conditions": [
+            {
+              "id": "kt-uniform-r8",
+              "label": "kt-uniform, nominal R = 8",
+              "sampling": "kt_uniform|cardiomm",
+              "acceleration": 8,
+              "panels": [
+                {
+                  "role": "reference",
+                  "label": "Reference",
+                  "alt": "Reference short-axis cardiac cine.",
+                  "src": "assets/experiments/acceleration/kt-uniform/reference-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "SDUM (Base)",
+                  "model": "SDUM",
+                  "alt": "SDUM reconstruction of short-axis cardiac cine at nominal R = 8.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r8/sdum_base-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "CardioMM",
+                  "model": "CardioMM",
+                  "alt": "CardioMM reconstruction of short-axis cardiac cine at nominal R = 8.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r8/cardiomm-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "RAM",
+                  "model": "RAM",
+                  "alt": "RAM reconstruction of short-axis cardiac cine at nominal R = 8.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r8/ram-frames.png"
+                }
+              ]
+            },
+            {
+              "id": "kt-uniform-r16",
+              "label": "kt-uniform, nominal R = 16",
+              "sampling": "kt_uniform|cardiomm",
+              "acceleration": 16,
+              "panels": [
+                {
+                  "role": "reference",
+                  "label": "Reference",
+                  "alt": "Reference short-axis cardiac cine.",
+                  "src": "assets/experiments/acceleration/kt-uniform/reference-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "SDUM (Base)",
+                  "model": "SDUM",
+                  "alt": "SDUM reconstruction of short-axis cardiac cine at nominal R = 16.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r16/sdum_base-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "CardioMM",
+                  "model": "CardioMM",
+                  "alt": "CardioMM reconstruction of short-axis cardiac cine at nominal R = 16.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r16/cardiomm-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "RAM",
+                  "model": "RAM",
+                  "alt": "RAM reconstruction of short-axis cardiac cine at nominal R = 16.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r16/ram-frames.png"
+                }
+              ]
+            },
+            {
+              "id": "kt-uniform-r24",
+              "label": "kt-uniform, nominal R = 24",
+              "sampling": "kt_uniform|cardiomm",
+              "acceleration": 24,
+              "panels": [
+                {
+                  "role": "reference",
+                  "label": "Reference",
+                  "alt": "Reference short-axis cardiac cine.",
+                  "src": "assets/experiments/acceleration/kt-uniform/reference-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "SDUM (Base)",
+                  "model": "SDUM",
+                  "alt": "SDUM reconstruction of short-axis cardiac cine at nominal R = 24.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r24/sdum_base-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "CardioMM",
+                  "model": "CardioMM",
+                  "alt": "CardioMM reconstruction of short-axis cardiac cine at nominal R = 24.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r24/cardiomm-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "RAM",
+                  "model": "RAM",
+                  "alt": "RAM reconstruction of short-axis cardiac cine at nominal R = 24.",
+                  "src": "assets/experiments/acceleration/kt-uniform/r24/ram-frames.png"
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "illustrations": [],
       "sources": ["main-v1"],
       "objective": "Evaluate model robustness to increasing acceleration factors."
@@ -70,19 +185,25 @@
       "dimension": "acquisition",
       "status": "published",
       "description": "How robust are pretrained models to changes in the physical sampling pattern?",
+      "setup_format": "table",
       "setup": [
         {
-          "label": "Input change",
-          "text": "Compare k-t uniform, k-t Gaussian and k-t pseudo-radial masks at each nominal R = 8, 16 or 24, with matched subjects and cross-model physical masks."
+          "label": "Sampling patterns",
+          "text": "The current evaluation includes three sampling patterns: k-t uniform, k-t Gaussian, and k-t radial (pseudo)."
         },
         {
-          "label": "Published conditions",
-          "text": "CardioMM mask implementation; ACS width 20; seed 1. Pseudo-radial masks use angle4next = 137.5, cropcorner = true and radial_acceleration_scale = 0.6. These are rasterized Cartesian masks, not NUFFT acquisitions."
+          "label": "Acceleration factors",
+          "text": "Nominal R = 8, 16, and 24."
         },
         {
-          "label": "Interpretation",
-          "text": "Equal nominal R does not imply equal actual sampling density across patterns. Actual R is reported for each condition. VISTA is a future extension and has no published result here."
+          "label": "Evaluation dataset",
+          "text": "In-house cardiac cine (short-axis), 65 patients."
         }
+      ],
+      "notes": [
+        "Sampling patterns are compared at the same nominal acceleration factors.",
+        "The actual acceleration (R_net) may differ across sampling patterns due to the inclusion of fully-sampled ACS data.",
+        "The results shown here used an ACS width of 20."
       ],
       "quantitative": [
         {
@@ -90,10 +211,124 @@
           "source": "main-v1"
         }
       ],
-      "qualitative": [],
+      "qualitative": [
+        {
+          "id": "cine-comparison",
+          "title": "Cardiac cine comparison",
+          "followFilters": true,
+          "playback": { "width": 174, "height": 192, "frames": 25, "frameMs": 120 },
+          "conditions": [
+            {
+              "id": "kt-uniform-r16",
+              "label": "kt-uniform, nominal R = 16",
+              "sampling": "kt_uniform|cardiomm",
+              "acceleration": 16,
+              "panels": [
+                {
+                  "role": "reference",
+                  "label": "Reference",
+                  "alt": "Reference short-axis cardiac cine.",
+                  "src": "assets/experiments/sampling/reference-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "SDUM (Base)",
+                  "model": "SDUM",
+                  "alt": "SDUM reconstruction of short-axis cardiac cine with kt-uniform at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-uniform/r16/sdum_base-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "CardioMM",
+                  "model": "CardioMM",
+                  "alt": "CardioMM reconstruction of short-axis cardiac cine with kt-uniform at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-uniform/r16/cardiomm-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "RAM",
+                  "model": "RAM",
+                  "alt": "RAM reconstruction of short-axis cardiac cine with kt-uniform at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-uniform/r16/ram-frames.png"
+                }
+              ]
+            },
+            {
+              "id": "kt-gaussian-r16",
+              "label": "kt-Gaussian, nominal R = 16",
+              "sampling": "kt_gaussian|cardiomm",
+              "acceleration": 16,
+              "panels": [
+                {
+                  "role": "reference",
+                  "label": "Reference",
+                  "alt": "Reference short-axis cardiac cine.",
+                  "src": "assets/experiments/sampling/reference-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "SDUM (Base)",
+                  "model": "SDUM",
+                  "alt": "SDUM reconstruction of short-axis cardiac cine with kt-Gaussian at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-gaussian/r16/sdum_base-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "CardioMM",
+                  "model": "CardioMM",
+                  "alt": "CardioMM reconstruction of short-axis cardiac cine with kt-Gaussian at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-gaussian/r16/cardiomm-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "RAM",
+                  "model": "RAM",
+                  "alt": "RAM reconstruction of short-axis cardiac cine with kt-Gaussian at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-gaussian/r16/ram-frames.png"
+                }
+              ]
+            },
+            {
+              "id": "kt-radial-r16",
+              "label": "kt-radial (pseudo), nominal R = 16",
+              "sampling": "kt_radial|cardiomm",
+              "acceleration": 16,
+              "panels": [
+                {
+                  "role": "reference",
+                  "label": "Reference",
+                  "alt": "Reference short-axis cardiac cine.",
+                  "src": "assets/experiments/sampling/reference-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "SDUM (Base)",
+                  "model": "SDUM",
+                  "alt": "SDUM reconstruction of short-axis cardiac cine with kt-radial (pseudo) at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-radial/r16/sdum_base-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "CardioMM",
+                  "model": "CardioMM",
+                  "alt": "CardioMM reconstruction of short-axis cardiac cine with kt-radial (pseudo) at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-radial/r16/cardiomm-frames.png"
+                },
+                {
+                  "role": "reconstruction",
+                  "label": "RAM",
+                  "model": "RAM",
+                  "alt": "RAM reconstruction of short-axis cardiac cine with kt-radial (pseudo) at nominal R = 16.",
+                  "src": "assets/experiments/sampling/kt-radial/r16/ram-frames.png"
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "illustrations": [],
       "sources": ["main-v1"],
-      "objective": "Assess robustness to sampling shifts by changing the spatial-temporal support of acquired k-space. Each model is evaluated with the same realized mask for a given subject and condition."
+      "objective": "Evaluate model robustness to different sampling patterns."
     },
     {
       "id": "acs",
@@ -101,11 +336,30 @@
       "dimension": "acquisition",
       "status": "planned",
       "description": "Evaluate dependence on fully sampled autocalibration signal by varying the ACS region or omitting ACS.",
+      "objective": "Evaluate model dependence on the size and availability of a fully-sampled autocalibration signal (ACS) region.",
+      "setup_format": "table",
       "setup": [
         {
-          "label": "Planned comparison",
-          "text": "Record ACS geometry and size, realized acceleration, physical-mask provenance and each model's calibration conditioning for every condition. Evaluation levels will accompany the results."
+          "label": "ACS size",
+          "text": "MRBench supports user-defined ACS sizes. The current evaluation uses 20, 15, 10, 5, and 1 central k-space lines."
+        },
+        {
+          "label": "Sampling patterns",
+          "text": "k-t uniform sampling is used for the controlled ACS reduction experiment. In addition, VISTA sampling is evaluated with and without a fully sampled ACS region (20 central k-space lines)."
+        },
+        {
+          "label": "Acceleration factors",
+          "text": "Actual acceleration R_net ≈ 6 for controlled ACS reduction experiments. Nominal R = 8 for VISTA sampling."
+        },
+        {
+          "label": "Evaluation dataset",
+          "text": "In-house cardiac cine (short-axis)."
         }
+      ],
+      "notes": [
+        "For controlled ACS reduction experiments, the spacing between sampled k-space lines is adjusted to maintain a similar net acceleration factor across different ACS sizes.",
+        "VISTA sampling does not contain a fully-sampled ACS region for each cardiac phase or slice. For comparison, 20 fully-sampled central k-space lines are added to the same VISTA mask.",
+        "SDUM and CardioMM rely on ACS data for internal coil sensitivity estimation; RAM uses externally provided coil sensitivity maps."
       ],
       "quantitative": [],
       "qualitative": [],

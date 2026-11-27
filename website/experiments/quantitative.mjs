@@ -7,7 +7,7 @@ import { sampling } from "./sampling.mjs";
 import {
   METRICS,
   patterns,
-  patternLabel,
+  resultPatternLabel,
   accelerations,
   selectCondition,
   initialSelection,
@@ -37,34 +37,26 @@ function chartCard(title, container, caption) {
 export function mountQuantitative(root, { module, source, rows, params, onSelection }) {
   const definition = QUANTITATIVE_MODULES[module.type];
   if (!definition) throw new Error(`Unsupported quantitative module: ${module.type}`);
-  const selection = initialSelection(rows, params);
+  const selection = initialSelection(rows, params, definition.defaultAcceleration);
   const state = { rows, metric: selection.metric, subject: null };
   const section = el("section", null, {
     id: "quantitative",
+    class: "experiment-results-panel",
     "aria-labelledby": "quantitative-title",
   });
   const heading = el("div", null, { class: "section-heading" });
   heading.append(el("h2", "Quantitative results", { id: "quantitative-title" }));
   const downloads = el("div", null, { class: "data-links" });
-  downloads.append(
-    el("a", "Download data (CSV)", { href: source.csv_path, download: "" }),
-    el("a", "Audit (JSON)", { href: source.audit_path, download: "" }),
-  );
+  downloads.append(el("a", "Download data (CSV)", { href: source.csv_path, download: "" }));
   heading.append(downloads);
-  const cohort = el(
-    "p",
-    `${source.cohort} · ${new Set(rows.map((r) => r.subject)).size} matched subjects per condition · ${modelNames(
-      rows,
-    )
-      .map((m) => modelLabel(m, rows))
-      .join(", ")}.`,
-    { class: "cohort-note" },
-  );
+  section.append(heading);
   const controls = el("div", null, { class: "controls" });
+  const { id, label } = source.dataset;
+  controls.append(filter("results-dataset", "Dataset", [[id, label]], id));
   const samplingFilter = filter(
     "sampling",
     "Sampling pattern",
-    patterns(rows).map((p) => [p, patternLabel(p)]),
+    patterns(rows).map((p) => [p, resultPatternLabel(p)]),
     selection.sampling,
   );
   const rFilter = filter(
@@ -79,11 +71,7 @@ export function mountQuantitative(root, { module, source, rows, params, onSelect
     METRICS.map((m) => [m, m === "PSNR" ? "PSNR (dB)" : m]),
     selection.metric,
   );
-  controls.append(
-    ...(module.type === "sampling"
-      ? [rFilter, samplingFilter, metricFilter]
-      : [samplingFilter, rFilter, metricFilter]),
-  );
+  controls.append(samplingFilter, rFilter, metricFilter);
   const context = el("div", null, { class: "condition-context" });
   const actual = el("p", null, { id: "condition-detail" });
   const direction = el("span", null, { id: "direction" });
@@ -98,14 +86,13 @@ export function mountQuantitative(root, { module, source, rows, params, onSelect
     legend.append(entry);
   }
   const chartsRoot = el("div", null, { class: "charts" });
-  chartsRoot.append(
-    chartCard(
-      "Subject distribution",
-      "distribution",
-      "Dots: subjects. Box: median and interquartile range; whiskers: observed range. Select a dot to highlight that subject across models.",
-    ),
-    chartCard(definition.title, definition.container, definition.caption),
+  const distributionCard = chartCard(
+    "Subject distribution",
+    "distribution",
+    "Dots: subjects. Box: median and interquartile range; whiskers: observed range.\nSelect a dot to highlight that subject across models.",
   );
+  const comparisonCard = chartCard(definition.title, definition.container, definition.caption);
+  chartsRoot.append(distributionCard, comparisonCard);
   const subjectNote = el("div", null, { class: "subject-note" });
   const selected = el("span", "No subject selected.");
   const clear = el("button", "Clear selection", { type: "button", class: "text-button" });
@@ -114,26 +101,7 @@ export function mountQuantitative(root, { module, source, rows, params, onSelect
   const mobileNote = el("p", "Swipe horizontally within a plot to inspect it.", {
     class: "mobile-note",
   });
-  const provenance = el("details", null, { class: "provenance" });
-  provenance.append(
-    el("summary", "Comparison and mask provenance"),
-    el("p", source.context),
-    el(
-      "p",
-      "Actual R includes acquired ACS. Subjects are matched across models and mask hashes are audited. Error bars show between-subject sample SD, not a confidence interval.",
-    ),
-  );
-  section.append(
-    heading,
-    cohort,
-    controls,
-    context,
-    legend,
-    chartsRoot,
-    mobileNote,
-    subjectNote,
-    provenance,
-  );
+  section.append(controls, context, legend, chartsRoot, mobileNote, subjectNote);
   root.append(section);
   const samplingSelect = samplingFilter.querySelector("select");
   const rSelect = rFilter.querySelector("select");
@@ -147,7 +115,10 @@ export function mountQuantitative(root, { module, source, rows, params, onSelect
       ...new Map(current.map((r) => [r.subject, r.actual_R])).values(),
     ]);
     const first = current[0];
-    actual.textContent = `Selected condition · actual R: median ${actualStats.median.toFixed(2)} (range ${actualStats.min.toFixed(2)}–${actualStats.max.toFixed(2)}) · ACS ${first.ncalib} · seed ${first.seed} · ${first.sampling_implementation} implementation`;
+    const median = actualStats.median.toFixed(2);
+    const min = actualStats.min.toFixed(2);
+    const max = actualStats.max.toFixed(2);
+    actual.textContent = `Actual R: median ${median} (range ${min}~${max}), ACS=${first.ncalib}`;
     direction.textContent = `${state.metric}${state.metric === "PSNR" ? " (dB)" : ""} · ${state.metric === "NRMSE" ? "Lower" : "Higher"} is better`;
     charts.distribution(current);
     definition.draw(charts);

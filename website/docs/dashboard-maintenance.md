@@ -41,7 +41,7 @@ New protocols need explicit protocol-specific labels and validation before publi
 
 ## Add illustrations or qualitative comparisons
 
-Place approved, de-identified, pre-rendered PNGs under:
+Place approved, de-identified, pre-rendered PNGs or GIFs under:
 
 ```text
 assets/experiments/<experiment-id>/<condition-id>/
@@ -81,7 +81,9 @@ Both `illustrations` and `qualitative` accept collections with the same schema. 
 }
 ```
 
-The renderer provides a condition selector when several conditions exist and lays out that condition's panels side by side. Supported roles are `reference`, `reconstruction`, `error`, `mask`, `input` and `zero-filled`. Error maps and additional model panels use the same list. Model borders use the shared manuscript colors; optional variant metadata preserves model labels. Empty collections render nothing. No qualitative examples are listed in this release.
+The renderer provides a condition selector when several conditions exist and lays out that condition's panels side by side. A collection with `followFilters: true` uses the result page filters instead. Each condition then specifies the full `sampling` key (such as `kt_uniform|cardiomm`) and numeric `acceleration`. For a missing reference, use `src: null` on the reference panel. A condition with no matching images shows an availability message. Supported roles are `reference`, `reconstruction`, `error`, `mask`, `input` and `zero-filled`. For filter-linked collections, panel labels are shown as written.
+
+For shared cine playback controls, add a `playback` object to the collection with `width`, `height` (per frame), `frames`, and `frameMs`. Each panel points to a PNG strip with frames stacked vertically in playback order. All panels in the collection use the same dimensions and timing.
 
 ## Check and release
 

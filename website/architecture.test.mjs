@@ -39,7 +39,7 @@ test("registry separates two published views from seven planned evaluations", ()
       assert.deepEqual(entry.quantitative, []);
     }
     assert.equal(hasPublishedMedia(entry.illustrations), false);
-    assert.equal(hasPublishedMedia(entry.qualitative), false);
+    assert.equal(hasPublishedMedia(entry.qualitative), entry.status === "published");
     assert.equal(parseRoute(experimentURL(entry.id)).id, entry.id);
   }
   for (const source of Object.values(registry.data_sources))
@@ -117,6 +117,27 @@ test("manuscript model colors and published variant labels are centralized", () 
   assert.equal(modelLabel("SDUM", rows), "SDUM Base");
   assert.equal(modelLabel("RAM", rows), "RAM DeepInv");
   assert.equal(modelLabel("CardioMM", rows), "CardioMM");
+});
+test("filter-linked cine panels match published conditions and have complete frame strips", () => {
+  for (const experiment of registry.experiments.filter((entry) => entry.status === "published")) {
+    const [collection] = validateMedia(experiment.qualitative);
+    assert.equal(collection.followFilters, true);
+    const { width, height, frames } = collection.playback;
+    assert.ok(collection.conditions.length > 0);
+    for (const condition of collection.conditions) {
+      assert.ok(selectCondition(rows, condition.sampling, condition.acceleration).length > 0);
+      assert.deepEqual(
+        condition.panels.map((panel) => panel.label),
+        ["Reference", "SDUM (Base)", "CardioMM", "RAM"],
+      );
+      for (const panel of condition.panels) {
+        const png = readFileSync(new URL(panel.src, import.meta.url));
+        assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+        assert.equal(png.readUInt32BE(16), width);
+        assert.equal(png.readUInt32BE(20), height * frames);
+      }
+    }
+  }
 });
 test("optional media accept condition-specific PNG comparisons and reject raw arrays", () => {
   assert.equal(hasPublishedMedia([]), false);
